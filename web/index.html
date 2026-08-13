@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 12 · נשימה אנושית · אקסנטים · הומניזציה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 13 · שפת ההרמוניה · סולמות ואקורדים</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -516,6 +516,23 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  <section class="rack">
+    <span class="rack-title">שפת ההרמוניה · סולם ומשטח אקורדים</span>
+    <div class="dial">
+      <label for="harmonyKeySelect">שורש</label>
+      <select id="harmonyKeySelect"></select>
+    </div>
+    <div class="dial">
+      <label for="harmonyScaleSelect">מצב</label>
+      <select id="harmonyScaleSelect"></select>
+    </div>
+    <div class="dial">
+      <label>תווי הסולם</label>
+      <span id="harmonyScaleNotes" style="color: var(--gold); font-weight: 800; direction: ltr;">—</span>
+    </div>
+    <div id="harmonyChordPad" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%;"></div>
+  </section>
+
   <section id="stepGrid"></section>
 
   <div class="lights">
@@ -525,7 +542,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">Shift+קליק = אקסנט זהב · נשימה אנושית · גשר P2P · טאפ · ביטול · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">משטח אקורדים דיאטוני · סולמות · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2803,6 +2820,185 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(function () {});
   });
 }
+
+var HARMONY_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+var HARMONY_SCALES = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  naturalMinor: [0, 2, 3, 5, 7, 8, 10],
+  pentatonicMajor: [0, 2, 4, 7, 9],
+  pentatonicMinor: [0, 3, 5, 7, 10],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10]
+};
+
+var HARMONY_SCALE_LABELS = {
+  "major": "מז'ור",
+  "naturalMinor": "מינור טבעי",
+  "pentatonicMajor": "פנטטוני מז'ור",
+  "pentatonicMinor": "פנטטוני מינור",
+  "dorian": "דורי",
+  "phrygian": "פריגי",
+  "mixolydian": "מיקסולידי"
+};
+
+var HARMONY_CHORDS = {
+  maj: [0, 4, 7],
+  min: [0, 3, 7],
+  dim: [0, 3, 6],
+  aug: [0, 4, 8]
+};
+
+var HARMONY_MAJOR_QUALITIES = ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim'];
+var HARMONY_MINOR_QUALITIES = ['min', 'dim', 'maj', 'min', 'min', 'maj', 'maj'];
+var HARMONY_ROMAN_MAJOR = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°'];
+var HARMONY_ROMAN_MINOR = ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'];
+
+var harmonyKey = 57;
+var harmonyScaleType = 'pentatonicMinor';
+
+var harmonyKeySelect = document.getElementById('harmonyKeySelect');
+var harmonyScaleSelect = document.getElementById('harmonyScaleSelect');
+var harmonyScaleNotesEl = document.getElementById('harmonyScaleNotes');
+var harmonyChordPad = document.getElementById('harmonyChordPad');
+
+function harmonyBuildScale(root, type) {
+  return HARMONY_SCALES[type].map(function (interval) {
+    return root + interval;
+  });
+}
+
+function harmonyBuildChord(root, type) {
+  return HARMONY_CHORDS[type].map(function (interval) {
+    return root + interval;
+  });
+}
+
+function harmonyIsMinorFamily(type) {
+  return type === 'naturalMinor' || type === 'phrygian' || type === 'dorian';
+}
+
+function harmonyDiatonicChord(root, type, degree) {
+  var scale = harmonyBuildScale(root, type);
+  if (scale.length === 0) return [];
+
+  var qualities = harmonyIsMinorFamily(type) ? HARMONY_MINOR_QUALITIES : HARMONY_MAJOR_QUALITIES;
+  var deg = ((degree - 1) % scale.length + scale.length) % scale.length;
+  var quality = qualities[deg % qualities.length];
+
+  return harmonyBuildChord(scale[deg], quality);
+}
+
+function harmonyNoteName(midi) {
+  var clamped = Math.max(0, Math.min(127, Math.floor(midi)));
+  return HARMONY_NOTE_NAMES[clamped % 12];
+}
+
+function voiceChord(notes, when, vel) {
+  var volume = vel || 1;
+  var count = notes.length;
+
+  for (var ci = 0; ci < count; ci++) {
+    if (!claimVoice()) return;
+
+    var oscC = audioCtx.createOscillator();
+    oscC.type = 'sawtooth';
+    oscC.frequency.value = midiToFreq(notes[ci]);
+
+    var filtC = audioCtx.createBiquadFilter();
+    filtC.type = 'lowpass';
+    filtC.frequency.value = 1000;
+
+    var gainC = audioCtx.createGain();
+    var atkC = Math.max(0.02, attackTime * 2);
+    var tailC = 1.4;
+    gainC.gain.setValueAtTime(0.0001, when);
+    gainC.gain.linearRampToValueAtTime((0.34 * volume) / Math.max(1, count) + 0.02, when + atkC);
+    gainC.gain.exponentialRampToValueAtTime(0.001, when + atkC + tailC);
+
+    oscC.connect(filtC);
+    filtC.connect(gainC);
+    gainC.connect(voiceBus);
+    gainC.connect(reverbSend);
+    oscC.start(when);
+    oscC.stop(when + atkC + tailC + 0.05);
+    oscC.onended = releaseVoice;
+  }
+
+  energy = Math.min(1.5, energy + 0.35);
+}
+
+function buildHarmonySelectors() {
+  harmonyKeySelect.innerHTML = '';
+
+  for (var ni = 0; ni < HARMONY_NOTE_NAMES.length; ni++) {
+    var keyOpt = document.createElement('option');
+    keyOpt.value = String(ni);
+    keyOpt.textContent = HARMONY_NOTE_NAMES[ni];
+    harmonyKeySelect.appendChild(keyOpt);
+  }
+
+  harmonyKeySelect.value = String(harmonyKey % 12);
+
+  harmonyScaleSelect.innerHTML = '';
+
+  for (var scaleKey in HARMONY_SCALES) {
+    var scaleOpt = document.createElement('option');
+    scaleOpt.value = scaleKey;
+    scaleOpt.textContent = HARMONY_SCALE_LABELS[scaleKey] || scaleKey;
+    harmonyScaleSelect.appendChild(scaleOpt);
+  }
+
+  harmonyScaleSelect.value = harmonyScaleType;
+}
+
+function buildHarmonyChordPad() {
+  harmonyChordPad.innerHTML = '';
+
+  var isMinor = harmonyIsMinorFamily(harmonyScaleType);
+  var romans = isMinor ? HARMONY_ROMAN_MINOR : HARMONY_ROMAN_MAJOR;
+  var degreesToUse = Math.min(7, HARMONY_SCALES[harmonyScaleType].length);
+
+  for (var d = 1; d <= degreesToUse; d++) {
+    (function (degree) {
+      var chordBtn = document.createElement('button');
+      chordBtn.type = 'button';
+      chordBtn.className = 'scene-btn';
+      chordBtn.textContent = romans[(degree - 1) % romans.length];
+
+      chordBtn.addEventListener('click', function () {
+        ensureLiveAudio();
+
+        var chord = harmonyDiatonicChord(harmonyKey, harmonyScaleType, degree);
+        voiceChord(chord, audioCtx.currentTime + 0.01, 1);
+
+        statusLine.textContent = 'אקורד ' + chordBtn.textContent + ' ✦ ' + chord.map(function (n) {
+          return harmonyNoteName(n);
+        }).join('-');
+      });
+
+      harmonyChordPad.appendChild(chordBtn);
+    })(d);
+  }
+
+  harmonyScaleNotesEl.textContent = harmonyBuildScale(harmonyKey, harmonyScaleType).map(function (n) {
+    return harmonyNoteName(n);
+  }).join(' · ');
+}
+
+harmonyKeySelect.addEventListener('change', function () {
+  harmonyKey = 48 + Number(harmonyKeySelect.value);
+  buildHarmonyChordPad();
+});
+
+harmonyScaleSelect.addEventListener('change', function () {
+  harmonyScaleType = harmonyScaleSelect.value;
+  buildHarmonyChordPad();
+});
+
+buildHarmonySelectors();
+buildHarmonyChordPad();
 
 var journeyArmed = false;
 var journeyEvents = [];
