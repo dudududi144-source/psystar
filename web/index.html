@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="color-scheme" content="dark"/>
-<title>PSYSTAR ✦ מכונת התודעה · שלב 3</title>
+<title>PSYSTAR ✦ מכונת התודעה · שלב 4</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/heebo@5.0.12/index.css"/>
 <style>
 :root {
@@ -158,6 +158,57 @@ body.dmt .mandala-spinner img {
 .dial input[type=range] { accent-color: var(--magenta); width: 110px; }
 .dial span { min-width: 44px; text-align: center; font-weight: 800; color: var(--cyan); font-size: 0.82rem; }
 
+select {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  max-width: 140px;
+}
+
+select option { background: #12082b; color: #fff; }
+
+.euclid-panel { margin-bottom: 18px; }
+
+.euclid-row {
+  display: flex; align-items: center; gap: 10px;
+  direction: ltr;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.euclid-label {
+  width: 110px; text-align: right;
+  font-weight: 800; font-size: 0.8rem;
+  direction: rtl;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.euclid-row input[type=range] { accent-color: var(--cyan); width: 90px; }
+.euclid-row .mini-val { min-width: 26px; text-align: center; color: var(--cyan); font-weight: 800; font-size: 0.8rem; }
+.euclid-row .mini-tag { font-size: 0.68rem; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; }
+
+.euclid-apply {
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  background: rgba(255, 209, 102, 0.12);
+  color: var(--gold);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.euclid-apply:hover { transform: scale(1.06); box-shadow: 0 0 16px rgba(255, 209, 102, 0.4); }
+
 .seq-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; direction: ltr; }
 
 .row-label {
@@ -239,7 +290,7 @@ body.dmt .mandala-spinner img {
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 3 · שכבת סאונד עמוקה · מסע סצנות</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 4 · זיכרון פורטל · אלכימיית קצב</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -318,6 +369,41 @@ body.dmt .mandala-spinner img {
     </div>
   </section>
 
+  <section class="rack">
+    <span class="rack-title">זיכרון פורטל · פריסטים</span>
+    <button id="fpBtn0" class="scene-btn" type="button">שחר קריסטלי</button>
+    <button id="fpBtn1" class="scene-btn" type="button">נהר מגנטה</button>
+    <button id="fpBtn2" class="scene-btn" type="button">ספירלת העומק</button>
+    <button id="fpBtn3" class="scene-btn" type="button">לב התהום</button>
+    <button id="captureBtn" class="orb ghost" type="button">לכידת פורטל ✧</button>
+    <button id="restoreBtn" class="orb ghost" type="button">שחזור פורטל</button>
+  </section>
+
+  <section class="rack">
+    <span class="rack-title">חלימה · מורפינג בין עולמות</span>
+    <div class="dial">
+      <label for="morphA">עולם א</label>
+      <select id="morphA"></select>
+    </div>
+    <div class="dial">
+      <label for="morphB">עולם ב</label>
+      <select id="morphB"></select>
+    </div>
+    <div class="dial">
+      <label for="morphRange">חלימה</label>
+      <input id="morphRange" type="range" min="0" max="100" value="0"/>
+      <span id="morphValue">0%</span>
+    </div>
+  </section>
+
+  <section class="euclid-panel">
+    <span class="rack-title">אלכימיית קצב · יוצר פעימות אוקלידי</span>
+    <div id="euclidRows"></div>
+    <div style="text-align:center; margin-top:12px;">
+      <button id="euclidRollBtn" class="orb gold" type="button">גלגל גורל אוקלידי ✦</button>
+    </div>
+  </section>
+
   <section id="stepGrid"></section>
 
   <div class="lights">
@@ -327,7 +413,7 @@ body.dmt .mandala-spinner img {
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">ADSR חי · ריסוק ופייזר · ניהול קולות · מצב מסע עם התחלה, עלייה ונחיתה · שום סוד לא נשמר כאן</p>
+  <p class="hint">פריסטים · מורפינג חי · קצבים אוקלידיים · ADSR · ריסוק ופייזר · מצב מסע · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -379,6 +465,29 @@ var SCENES = [
   }
 ];
 
+var FACTORY_PRESETS = [
+  {
+    name: 'שחר קריסטלי',
+    rows: SCENES[0].rows,
+    params: { bpm: 122, swing: 0, intensity: 6, attack: 8, release: 300, crush: 0, phaser: 0, delay: 50, reverb: 45 }
+  },
+  {
+    name: 'נהר מגנטה',
+    rows: SCENES[1].rows,
+    params: { bpm: 132, swing: 14, intensity: 7, attack: 12, release: 380, crush: 0, phaser: 28, delay: 62, reverb: 40 }
+  },
+  {
+    name: 'ספירלת העומק',
+    rows: SCENES[2].rows,
+    params: { bpm: 112, swing: 8, intensity: 5, attack: 40, release: 900, crush: 22, phaser: 18, delay: 44, reverb: 68 }
+  },
+  {
+    name: 'לב התהום',
+    rows: SCENES[3].rows,
+    params: { bpm: 96, swing: 0, intensity: 9, attack: 60, release: 1600, crush: 10, phaser: 52, delay: 30, reverb: 78 }
+  }
+];
+
 var gridState = SCENES[0].rows.map(function (row) {
   return row.map(function (bit) { return bit === 1; });
 });
@@ -388,6 +497,46 @@ var leadPenta = [0, 3, 5, 7, 10];
 
 function midiToFreq(midi) {
   return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function euclideanRow(pulses, steps, rotation) {
+  var safeSteps = Math.max(1, Math.floor(steps));
+  var safePulses = Math.max(0, Math.min(Math.floor(pulses), safeSteps));
+
+  var pattern = [];
+  for (var i = 0; i < safeSteps; i++) {
+    pattern.push((i * safePulses) % safeSteps < safePulses);
+  }
+
+  var safeRotation = ((Math.floor(rotation) % safeSteps) + safeSteps) % safeSteps;
+  if (safeRotation === 0) return pattern;
+
+  var rotated = [];
+  for (var j = 0; j < safeSteps; j++) {
+    rotated.push(pattern[(j - safeRotation + safeSteps) % safeSteps]);
+  }
+
+  return rotated;
+}
+
+function morphLocal(aPreset, bPreset, t) {
+  var clamped = Math.max(0, Math.min(1, t));
+
+  var rows = aPreset.rows.map(function (rowA, r) {
+    return rowA.map(function (cellA, c) {
+      var va = cellA ? 1 : 0;
+      var vb = bPreset.rows[r][c] ? 1 : 0;
+      return (va + (vb - va) * clamped) >= 0.5;
+    });
+  });
+
+  var params = {};
+  var keys = ['bpm', 'swing', 'intensity', 'attack', 'release', 'crush', 'phaser', 'delay', 'reverb'];
+  keys.forEach(function (key) {
+    params[key] = Math.round(aPreset.params[key] + (bPreset.params[key] - aPreset.params[key]) * clamped);
+  });
+
+  return { name: aPreset.name + ' ⇄ ' + bPreset.name, rows: rows, params: params };
 }
 
 var audioCtx = null;
@@ -735,6 +884,10 @@ var delayRange = document.getElementById('delayRange');
 var delayValueEl = document.getElementById('delayValue');
 var reverbRange = document.getElementById('reverbRange');
 var reverbValueEl = document.getElementById('reverbValue');
+var morphA = document.getElementById('morphA');
+var morphB = document.getElementById('morphB');
+var morphRange = document.getElementById('morphRange');
+var morphValueEl = document.getElementById('morphValue');
 var statusLine = document.getElementById('statusLine');
 var voiceLine = document.getElementById('voiceLine');
 var gridEl = document.getElementById('stepGrid');
@@ -799,6 +952,7 @@ ROWS.forEach(function (row, rowIndex) {
         gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
         refreshCell(rowIndex, stepIndex);
         markActiveScene(-1);
+        markActivePreset(-1);
       });
 
       cellRefs[rowIndex][stepIndex] = cell;
@@ -855,6 +1009,7 @@ function setSceneGrid(index) {
 
 function applyScene(index) {
   setSceneGrid(index);
+  markActivePreset(-1);
   statusLine.textContent = 'סצנה נטענה ✦ ' + SCENES[index].name;
 }
 
@@ -876,6 +1031,7 @@ function randomizeGrid() {
   gridState[0][0] = true;
   refreshAllCells();
   markActiveScene(-1);
+  markActivePreset(-1);
   statusLine.textContent = 'הישות זרקה תבנית חדשה ✦ תאחז חזק';
 }
 
@@ -887,6 +1043,7 @@ function clearGrid() {
   }
   refreshAllCells();
   markActiveScene(-1);
+  markActivePreset(-1);
   statusLine.textContent = 'הרשת נוקתה ✦ שקט לפני הסערה';
 }
 
@@ -925,6 +1082,251 @@ function loadSceneFromLocal() {
 document.getElementById('randomBtn').addEventListener('click', randomizeGrid);
 document.getElementById('clearBtn').addEventListener('click', clearGrid);
 document.getElementById('saveBtn').addEventListener('click', saveSceneToLocal);
+
+var presetButtons = [
+  document.getElementById('fpBtn0'),
+  document.getElementById('fpBtn1'),
+  document.getElementById('fpBtn2'),
+  document.getElementById('fpBtn3')
+];
+
+function markActivePreset(index) {
+  presetButtons.forEach(function (btn, i) {
+    btn.classList.toggle('active', i === index);
+  });
+}
+
+var customPreset = null;
+var presetLibrary = FACTORY_PRESETS.slice();
+
+function loadCustomFromStorage() {
+  try {
+    var raw = localStorage.getItem('psystar.preset.custom.v1');
+    if (!raw) return;
+    var parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.name === 'string' && Array.isArray(parsed.rows) && parsed.params) {
+      customPreset = parsed;
+    }
+  } catch (err) {
+    customPreset = null;
+  }
+}
+
+function rebuildPresetLibrary() {
+  presetLibrary = FACTORY_PRESETS.slice();
+  if (customPreset) presetLibrary.push(customPreset);
+}
+
+function rebuildMorphSelects() {
+  var keepA = morphA.value;
+  var keepB = morphB.value;
+
+  morphA.innerHTML = '';
+  morphB.innerHTML = '';
+
+  presetLibrary.forEach(function (preset, i) {
+    var optA = document.createElement('option');
+    optA.value = String(i);
+    optA.textContent = preset.name;
+    morphA.appendChild(optA);
+
+    var optB = document.createElement('option');
+    optB.value = String(i);
+    optB.textContent = preset.name;
+    morphB.appendChild(optB);
+  });
+
+  if (keepA && Number(keepA) < presetLibrary.length) morphA.value = keepA;
+  else morphA.value = '0';
+
+  if (keepB && Number(keepB) < presetLibrary.length) morphB.value = keepB;
+  else morphB.value = presetLibrary.length > 1 ? '1' : '0';
+
+  if (morphA.value === morphB.value && presetLibrary.length > 1) {
+    morphB.value = String((Number(morphA.value) + 1) % presetLibrary.length);
+  }
+}
+
+function setSlider(el, value) {
+  el.value = String(value);
+  el.dispatchEvent(new Event('input'));
+}
+
+function applyPresetToConsole(preset) {
+  gridState = preset.rows.map(function (row) { return row.slice(); });
+  refreshAllCells();
+  markActiveScene(-1);
+
+  setSlider(bpmRange, preset.params.bpm);
+  setSlider(swingRange, preset.params.swing);
+  setSlider(intensityRange, preset.params.intensity);
+  setSlider(attackRange, preset.params.attack);
+  setSlider(releaseRange, preset.params.release);
+  setSlider(crushRange, preset.params.crush);
+  setSlider(phaserRange, preset.params.phaser);
+  setSlider(delayRange, preset.params.delay);
+  setSlider(reverbRange, preset.params.reverb);
+}
+
+presetButtons.forEach(function (btn, i) {
+  btn.addEventListener('click', function () {
+    applyPresetToConsole(FACTORY_PRESETS[i]);
+    markActivePreset(i);
+    statusLine.textContent = 'פורטל נפתח ✦ ' + FACTORY_PRESETS[i].name;
+  });
+});
+
+function captureCurrentPreset() {
+  return {
+    name: 'פורטל אישי',
+    rows: gridState.map(function (row) { return row.slice(); }),
+    params: {
+      bpm: bpm,
+      swing: swingPercent,
+      intensity: intensity,
+      attack: Math.round(attackTime * 1000),
+      release: Math.round(releaseTime * 1000),
+      crush: Number(crushRange.value),
+      phaser: Number(phaserRange.value),
+      delay: Number(delayRange.value),
+      reverb: Number(reverbRange.value)
+    }
+  };
+}
+
+document.getElementById('captureBtn').addEventListener('click', function () {
+  customPreset = captureCurrentPreset();
+
+  try {
+    localStorage.setItem('psystar.preset.custom.v1', JSON.stringify(customPreset));
+  } catch (err) {}
+
+  rebuildPresetLibrary();
+  rebuildMorphSelects();
+  statusLine.textContent = 'הפורטל נלכד ✦ המצב שלך נשמר כפריסט אישי';
+});
+
+document.getElementById('restoreBtn').addEventListener('click', function () {
+  if (!customPreset) {
+    statusLine.textContent = 'אין פורטל לכוד עדיין ✦ לכידה קודם, אחר כך שחזור';
+    return;
+  }
+
+  applyPresetToConsole(customPreset);
+  markActivePreset(-1);
+  statusLine.textContent = 'הפורטל האישי שוחזר ✦ המכונה זוכרת אותך';
+});
+
+morphRange.addEventListener('input', function () {
+  morphValueEl.textContent = morphRange.value + '%';
+
+  var t = Number(morphRange.value) / 100;
+  var aPreset = presetLibrary[Number(morphA.value)];
+  var bPreset = presetLibrary[Number(morphB.value)];
+
+  if (!aPreset || !bPreset) return;
+
+  var blended = morphLocal(aPreset, bPreset, t);
+  applyPresetToConsole(blended);
+  markActivePreset(-1);
+  statusLine.textContent = 'חולמים בין ' + aPreset.name + ' ל-' + bPreset.name;
+});
+
+var euclidWrap = document.getElementById('euclidRows');
+var euclidDefaults = { pulses: [4, 5, 1, 3], rotation: [0, 0, 0, 0] };
+var euclidControls = [];
+
+ROWS.forEach(function (row, rowIndex) {
+  var rowEl = document.createElement('div');
+  rowEl.className = 'euclid-row';
+
+  var label = document.createElement('span');
+  label.className = 'euclid-label';
+  label.style.color = row.color;
+  label.textContent = row.name;
+  rowEl.appendChild(label);
+
+  var pulsesTag = document.createElement('span');
+  pulsesTag.className = 'mini-tag';
+  pulsesTag.textContent = 'פעמים';
+  rowEl.appendChild(pulsesTag);
+
+  var pulsesInput = document.createElement('input');
+  pulsesInput.type = 'range';
+  pulsesInput.min = '0';
+  pulsesInput.max = '16';
+  pulsesInput.value = String(euclidDefaults.pulses[rowIndex]);
+  rowEl.appendChild(pulsesInput);
+
+  var pulsesVal = document.createElement('span');
+  pulsesVal.className = 'mini-val';
+  pulsesVal.textContent = pulsesInput.value;
+  rowEl.appendChild(pulsesVal);
+
+  var rotTag = document.createElement('span');
+  rotTag.className = 'mini-tag';
+  rotTag.textContent = 'סיבוב';
+  rowEl.appendChild(rotTag);
+
+  var rotInput = document.createElement('input');
+  rotInput.type = 'range';
+  rotInput.min = '0';
+  rotInput.max = '15';
+  rotInput.value = String(euclidDefaults.rotation[rowIndex]);
+  rowEl.appendChild(rotInput);
+
+  var rotVal = document.createElement('span');
+  rotVal.className = 'mini-val';
+  rotVal.textContent = rotInput.value;
+  rowEl.appendChild(rotVal);
+
+  var applyBtn = document.createElement('button');
+  applyBtn.type = 'button';
+  applyBtn.className = 'euclid-apply';
+  applyBtn.textContent = 'אריגה';
+  rowEl.appendChild(applyBtn);
+
+  pulsesInput.addEventListener('input', function () {
+    pulsesVal.textContent = pulsesInput.value;
+  });
+
+  rotInput.addEventListener('input', function () {
+    rotVal.textContent = rotInput.value;
+  });
+
+  applyBtn.addEventListener('click', function () {
+    gridState[rowIndex] = euclideanRow(Number(pulsesInput.value), STEPS, Number(rotInput.value));
+    refreshAllCells();
+    markActiveScene(-1);
+    markActivePreset(-1);
+    statusLine.textContent = 'פעימות אוקלידיות נארגו עבור ' + ROWS[rowIndex].name;
+  });
+
+  euclidControls.push({ pulses: pulsesInput, rotation: rotInput, pulsesVal: pulsesVal, rotVal: rotVal });
+  euclidWrap.appendChild(rowEl);
+});
+
+document.getElementById('euclidRollBtn').addEventListener('click', function () {
+  var pulseChoices = [[3, 4, 5], [5, 6, 7, 8], [1, 2], [3, 4, 5, 6]];
+
+  for (var r = 0; r < ROWS.length; r++) {
+    var options = pulseChoices[r];
+    var pulses = options[Math.floor(Math.random() * options.length)];
+    var rotation = Math.floor(Math.random() * STEPS);
+
+    euclidControls[r].pulses.value = String(pulses);
+    euclidControls[r].rotation.value = String(rotation);
+    euclidControls[r].pulsesVal.textContent = String(pulses);
+    euclidControls[r].rotVal.textContent = String(rotation);
+
+    gridState[r] = euclideanRow(pulses, STEPS, rotation);
+  }
+
+  refreshAllCells();
+  markActiveScene(-1);
+  markActivePreset(-1);
+  statusLine.textContent = 'הגורל האוקלידי נגלגל ✦ ארבעה קצבים חדשים נארגו יחד';
+});
 
 songBtn.addEventListener('click', function () {
   songMode = !songMode;
@@ -1034,7 +1436,7 @@ window.addEventListener('keydown', function (e) {
   if (e.code !== 'Space' || e.repeat) return;
 
   var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
-  if (tag === 'input' || tag === 'textarea') return;
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
   e.preventDefault();
   toggleEngine();
@@ -1232,6 +1634,9 @@ function animationLoop(time) {
 }
 
 loadSceneFromLocal();
+loadCustomFromStorage();
+rebuildPresetLibrary();
+rebuildMorphSelects();
 requestAnimationFrame(animationLoop);
 </script>
 </body>
