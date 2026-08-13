@@ -1305,7 +1305,10 @@ function rebuildMorphSelects() {
 }
 
 function setSlider(el, value) {
-  el.value = String(value);
+  var safe = Number(value);
+  if (isNaN(safe)) return;
+
+  el.value = String(safe);
   el.dispatchEvent(new Event('input'));
 }
 
