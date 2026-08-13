@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-15%2F15-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-17%2F17-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
@@ -55,6 +55,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - **שפת ההרמוניה: 7 סולמות, אקורדים דיאטוניים, משטח אקורדים חי עם שמות רומיים**
 - מעבדת אבולוציה: מוטציה, סיבוב, היפוך, רטרוגרד עם עוגן בס
 - עורך שירים: שרשרת סצנות עם תיבות, לולאה, ניגון ושמירה בספרייה
+- חבילות משפחתיות: חבילת בית אצורה, יצוא ספרייה שלמה כ-pack נייד ויבוא חזרה
 - שער Foundation: צרכן קנוני של protocol v1 ו-device-sdk v1 עם ערוץ אירועים חי
 
 ## ✦ עקרונות על
@@ -78,6 +79,8 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 עריכת שירים: בחרו סצנה ומספר תיבות, לחצו **הוספה לשיר ✚**, וכשהשרשרת מוכנה — **ניגון שיר ▶**. המכונה עוברת סצנה בדיוק בכל גבול תיבה, ובלי לולאה היא מסיימת את היצירה בעצמה. **שמירה לספרייה** הופכת את השיר לאובייקט נייד.
 
+חבילות משפחתיות: לחצו **חבילת הבית ✦** כדי לקבל שתי סצנות, יומן מסע ושיר מוכנים. **יצוא ספרייה ⬇** אורז את כל החלומות לקובץ psystar-pack.json אחד, ו**יבוא חבילה ⬆** מחיה אותם בכל מכשיר אחר.
+
 ## ✦ מבנה
 
 - `docs/` — ארכיטקטורה, roast, החלטות, בדיקות, עיצוב, אינטגרציה, מפת דרכים
@@ -96,6 +99,6 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 <div align="center">
 
-**PSYSTAR — לא מכשיר. שער. צומת. כלי. זיכרון. ספרייה. מקדש. מכונה שמקשיבה. גשר בין עולמות. מכונה שמרגישה. מכונה שמבינה מוזיקה. ומכונה שמספרת סיפורים שלמים.**
+**PSYSTAR — לא מכשיר. שער. צומת. כלי. זיכרון. ספרייה. מקדש. מכונה שמקשיבה. גשר בין עולמות. מכונה שמרגישה. מכונה שמבינה מוזיקה. מכונה שמספרת סיפורים שלמים. ומשפחה שמחליפה עולמות.**
 
 </div>
