@@ -652,9 +652,11 @@ function morphLocal(aPreset, bPreset, t) {
   var clamped = Math.max(0, Math.min(1, t));
 
   var rows = aPreset.rows.map(function (rowA, r) {
+    var rowB = Array.isArray(bPreset.rows[r]) ? bPreset.rows[r] : [];
+
     return rowA.map(function (cellA, c) {
       var va = cellA ? 1 : 0;
-      var vb = bPreset.rows[r][c] ? 1 : 0;
+      var vb = rowB[c] ? 1 : 0;
       return (va + (vb - va) * clamped) >= 0.5;
     });
   });
@@ -662,7 +664,9 @@ function morphLocal(aPreset, bPreset, t) {
   var params = {};
   var keys = ['bpm', 'swing', 'intensity', 'attack', 'release', 'crush', 'phaser', 'delay', 'reverb'];
   keys.forEach(function (key) {
-    params[key] = Math.round(aPreset.params[key] + (bPreset.params[key] - aPreset.params[key]) * clamped);
+    var valueA = Number(aPreset.params[key]) || 0;
+    var valueB = Number(bPreset.params[key]) || 0;
+    params[key] = Math.round(valueA + (valueB - valueA) * clamped);
   });
 
   return { name: aPreset.name + ' ⇄ ' + bPreset.name, rows: rows, params: params };
@@ -1728,6 +1732,8 @@ function scheduleLoop() {
 function startEngine() {
   if (running) return;
 
+  if (replayActive) stopJourneyReplay();
+
   initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -1970,6 +1976,7 @@ function drawCosmos(time) {
 var p2pConn = null;
 var p2pChannel = null;
 var p2pRole = 'none';
+var p2pPresenceTimer = null;
 
 var p2pHostBtn = document.getElementById('p2pHostBtn');
 var p2pJoinBtn = document.getElementById('p2pJoinBtn');
@@ -2021,7 +2028,7 @@ function waitForIceComplete(conn) {
         settled = true;
         resolve();
       }
-    }, 4000);
+    }, 6000);
   });
 }
 
@@ -2058,6 +2065,14 @@ function onP2pChannelMessage(event) {
   }
 }
 
+function sendP2pPresence() {
+  if (!p2pChannel || p2pChannel.readyState !== 'open') return;
+
+  try {
+    p2pChannel.send(JSON.stringify({ kind: 'presence', deviceId: deviceId, time: Date.now(), payload: {} }));
+  } catch (err) {}
+}
+
 function setupP2pChannel(channel) {
   p2pChannel = channel;
 
@@ -2067,11 +2082,21 @@ function setupP2pChannel(channel) {
     statusLine.textContent = p2pRole === 'host'
       ? 'הגשר נפתח ✦ האורח מחובר — אתם המובילים של העולם הזה'
       : 'הגשר נפתח ✦ אתם מחברים לעולם אחר ומקשיבים למארח';
+
+    if (p2pRole === 'guest') {
+      sendP2pPresence();
+      p2pPresenceTimer = setInterval(sendP2pPresence, 5000);
+    }
   };
 
   channel.onmessage = onP2pChannelMessage;
 
   channel.onclose = function () {
+    if (p2pPresenceTimer) {
+      clearInterval(p2pPresenceTimer);
+      p2pPresenceTimer = null;
+    }
+
     p2pChannel = null;
     p2pHostBtn.classList.remove('active');
     p2pJoinBtn.classList.remove('active');
@@ -2545,6 +2570,7 @@ function undoGrid() {
 
   gridFuture.push(captureGridSnapshot());
   restoreGridSnapshot(gridHistory.pop());
+  broadcastGrid();
   statusLine.textContent = 'ביטול ✦ הרשת חזרה אחורה';
 }
 
@@ -2556,6 +2582,7 @@ function redoGrid() {
 
   gridHistory.push(captureGridSnapshot());
   restoreGridSnapshot(gridFuture.pop());
+  broadcastGrid();
   statusLine.textContent = 'ביצוע מחדש ✦ הרשת התקדמה קדימה';
 }
 
