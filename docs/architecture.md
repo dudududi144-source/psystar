@@ -25,6 +25,10 @@ Preset לוכד את כל מצב המכונה — גריד + פרמטרים. mor
 
 euclidean(pulses, steps, rotation) מחלק פעימות באופן שווה ככל האפשר — הקצב הפסיכדלי הקלאסי. כל ערוץ בקונסולה מקבל יוצר אוקלידי עצמאי עם סיבוב, כך שניתן לארוג פוליריתמיה שלמה בלחיצה.
 
+## זרימת זיכרון-מסע (Journey)
+
+יומן מסע חמוש לוכד כל צעד מנוגן כמסיכת ערוצים וכל מעבר סצנה, עם זמן יחסי להתחלה. ניגון יומן מתזמן את האירועים מחדש: סצנות מוחלפות, קולות מנוגנים, תאורה רצה, ואפילו MIDI נשלח החוצה. יצוא JSON הופך מסע שלם לאובייקט נייד בין מכשירים.
+
 ## זרימת רשת (Multi-Device Sync)
 
 SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפקידי solo/leader/follower. הקונסולה מממשת זאת מעל BroadcastChannel: מוביל משדר כל שינוי, עוקבים מחילים, presence שומר על מניית מכשירים חיה. FoundationBridge מחבר את כל זה החוצה אל psy-foundation דרך port יחיד ומבודד.
@@ -40,6 +44,7 @@ SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפ
 - domain/song: שרשרת סצנות, loop, רזולוציה לפי bar.
 - domain/euclidean: חלוקת פעימות שווה, סיבוב, צפיפות.
 - domain/preset: לכידת מצב מלא, ולידציה, מורפינג בין עולמות.
+- domain/journey: יומן מסע — אירועים, זמן יחסי, קידוד ושיתוף.
 - domain/transport: זמן, מצב ריצה, התקדמות אימוטבילית.
 - protocol/codec: serialize/deserialize עם ולידציה מלאה.
 - engine/scheduler: לא יודע מהו סאונד אמיתי — רק פולט אירועים.
