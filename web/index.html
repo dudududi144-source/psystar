@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="dark"/>
+<title>PSYSTAR ✦ מכונת התודעה</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/heebo@5.0.12/index.css"/>
+<style>
+:root {
+  --magenta: #ff2bd6;
+  --cyan: #00f0ff;
+  --gold: #ffd166;
+  --violet: #7b2ff7;
+  --abyss: #05020f;
+  --intensity: 0.6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--abyss);
+  color: #fff;
+  font-family: 'Heebo', sans-serif;
+  overflow-x: hidden;
+}
+
+#cosmosCanvas { position: fixed; inset: 0; z-index: 0; }
+
+.mandala-wrap {
+  position: fixed; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+
+.mandala-spinner { animation: mandalaSpin 90s linear infinite; }
+body.dmt .mandala-spinner { animation-duration: 24s; }
+
+.mandala-spinner img {
+  display: block;
+  width: min(78vmin, 720px);
+  opacity: calc(0.20 + var(--intensity) * 0.45);
+  mix-blend-mode: screen;
+  filter: saturate(1.35);
+  animation: mandalaBreathe 7s ease-in-out infinite alternate;
+}
+
+body.dmt .mandala-spinner img {
+  animation: mandalaBreathe 2.6s ease-in-out infinite alternate, hueSpin 5s linear infinite;
+}
+
+@keyframes mandalaSpin { to { transform: rotate(360deg); } }
+@keyframes mandalaBreathe { from { transform: scale(0.96); } to { transform: scale(1.06); } }
+@keyframes hueSpin { from { filter: saturate(1.5) hue-rotate(0deg); } to { filter: saturate(1.8) hue-rotate(360deg); } }
+
+.console {
+  position: relative; z-index: 2;
+  max-width: 1080px;
+  margin: 4vh auto 6vh;
+  padding: 28px 26px 34px;
+  background: rgba(10, 5, 26, 0.62);
+  border: 1px solid rgba(255, 43, 214, 0.35);
+  border-radius: 30px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 60px rgba(123, 47, 247, 0.35), inset 0 0 40px rgba(0, 240, 255, 0.06);
+}
+
+.title {
+  margin: 0; text-align: center;
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 900; letter-spacing: 0.12em;
+  background: linear-gradient(90deg, var(--magenta), var(--cyan), var(--gold), var(--magenta));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: titleFlow 8s linear infinite;
+  filter: drop-shadow(0 0 18px rgba(255, 43, 214, 0.45));
+}
+
+@keyframes titleFlow { to { background-position: 300% 0; } }
+
+.subtitle {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.3em;
+  margin: 6px 0 26px;
+  font-size: 0.85rem;
+}
+
+.transport {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  align-items: center; justify-content: center;
+  margin-bottom: 26px;
+}
+
+.orb {
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  background: radial-gradient(circle at 30% 30%, rgba(0, 240, 255, 0.25), rgba(123, 47, 247, 0.25));
+  color: #fff;
+  padding: 12px 26px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+}
+
+.orb:hover { transform: scale(1.06); }
+.orb:active { transform: scale(0.94); }
+
+.orb.active {
+  box-shadow: 0 0 34px var(--magenta), 0 0 60px rgba(255, 43, 214, 0.4);
+  border-color: var(--magenta);
+}
+
+.orb.gold {
+  border-color: rgba(255, 209, 102, 0.6);
+  box-shadow: 0 0 18px rgba(255, 209, 102, 0.3);
+}
+
+.dial {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 16px;
+  border-radius: 18px;
+}
+
+.dial label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); letter-spacing: 0.12em; }
+.dial input[type=range] { accent-color: var(--magenta); width: 140px; }
+.dial span { min-width: 34px; text-align: center; font-weight: 800; color: var(--cyan); }
+
+.seq-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; direction: ltr; }
+
+.row-label {
+  width: 110px; text-align: right;
+  font-weight: 800; font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 12px currentColor;
+  direction: rtl;
+}
+
+.cells { display: grid; grid-template-columns: repeat(16, 1fr); gap: 6px; flex: 1; }
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cell:hover { transform: scale(1.12); }
+.cell.beat4 { border-color: rgba(255, 209, 102, 0.5); }
+
+.lights { display: flex; gap: 12px; margin-top: 4px; direction: ltr; }
+.lights .spacer { width: 110px; }
+.lights .track { display: grid; grid-template-columns: repeat(16, 1fr); gap: 6px; flex: 1; }
+
+.light {
+  height: 6px; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.1s, box-shadow 0.1s;
+}
+
+.light.now { background: #fff; box-shadow: 0 0 14px var(--cyan); }
+
+.status {
+  margin-top: 22px; text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.14em;
+  font-size: 0.9rem;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+  min-height: 1.4em;
+}
+
+.hint {
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 8px;
+  letter-spacing: 0.1em;
+}
+</style>
+</head>
+<body>
+<canvas id="cosmosCanvas"></canvas>
+
+<div class="mandala-wrap">
+  <div class="mandala-spinner">
+    <img src="https://image.qwenlm.ai/public_source/98b8c77c-0f57-4a31-8b69-523ff809b8f2/17ad04890-223b-4e40-9470-6ed740c0c491.png" alt="מנדלת PSYSTAR"/>
+  </div>
+</div>
+
+<main class="console">
+  <h1 class="title">PSYSTAR</h1>
+  <p class="subtitle">מכונת התודעה ✦ מסע DMT אינטראקטיבי</p>
+
+  <section class="transport">
+    <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
+    <button id="stopBtn" class="orb" type="button">■ עצירה</button>
+
+    <div class="dial">
+      <label for="bpmRange">פעימה</label>
+      <input id="bpmRange" type="range" min="60" max="180" value="122"/>
+      <span id="bpmValue">122</span>
+    </div>
+
+    <div class="dial">
+      <label for="intensityRange">עוצמת מסע</label>
+      <input id="intensityRange" type="range" min="1" max="10" value="6"/>
+      <span id="intensityValue">6</span>
+    </div>
+
+    <button id="dmtBtn" class="orb gold" type="button">מצב DMT</button>
+  </section>
+
+  <section id="stepGrid"></section>
+
+  <div class="lights">
+    <span class="spacer"></span>
+    <div id="lightTrack" class="track"></div>
+  </div>
+
+  <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער.</p>
+  <p class="hint">כל ויזואל מגיב למוזיקה · כל צעד ניתן לעריכה · שום סוד לא נשמר כאן</p>
+</main>
+
+<script>
+var ROWS = [
+  { id: 'bass',  name: 'בס תהום',    color: '#ff2bd6' },
+  { id: 'lead',  name: 'ליד קריסטל', color: '#00f0ff' },
+  { id: 'pad',   name: 'פד ערפל',    color: '#7b2ff7' },
+  { id: 'spark', name: 'ניצוץ ישות', color: '#ffd166' }
+];
+
+var STEPS = 16;
+
+var gridState = ROWS.map(function () {
+  var arr = [];
+  for (var i = 0; i < STEPS; i++) arr.push(false);
+  return arr;
+});
+
+var seed = {
+  bass:  [0, 3, 6, 8, 10, 12],
+  lead:  [2, 7, 10, 14],
+  pad:   [0, 8],
+  spark: [4, 11, 15]
+};
+
+ROWS.forEach(function (row, rowIndex) {
+  seed[row.id].forEach(function (stepIndex) {
+    gridState[rowIndex][stepIndex] = true;
+  });
+});
+
+var bassScale = [0, 0, 3, 0, 5, 3, 0, 7];
+var leadPenta = [0, 3, 5, 7, 10];
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+var audioCtx = null;
+var masterGain = null;
+var delayNode = null;
+
+function initAudio() {
+  if (audioCtx) return;
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.8;
+  masterGain.connect(audioCtx.destination);
+
+  delayNode = audioCtx.createDelay(1.0);
+  delayNode.delayTime.value = 0.34;
+
+  var feedback = audioCtx.createGain();
+  feedback.gain.value = 0.42;
+
+  var delayFilter = audioCtx.createBiquadFilter();
+  delayFilter.type = 'lowpass';
+  delayFilter.frequency.value = 2200;
+
+  delayNode.connect(delayFilter);
+  delayFilter.connect(feedback);
+  feedback.connect(delayNode);
+  delayNode.connect(masterGain);
+}
+
+function voiceBass(stepIndex) {
+  var semis = bassScale[stepIndex % bassScale.length];
+  var osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = midiToFreq(45 + semis);
+
+  var filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(900, audioCtx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.22);
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(masterGain);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function voiceLead(stepIndex) {
+  var semis = leadPenta[(stepIndex * 3) % leadPenta.length];
+  var osc = audioCtx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.value = midiToFreq(69 + semis);
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.34);
+
+  osc.connect(gain);
+  gain.connect(masterGain);
+  gain.connect(delayNode);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.36);
+}
+
+function voicePad(stepIndex) {
+  var semis = [0, 5][stepIndex % 2];
+  var oscA = audioCtx.createOscillator();
+  var oscB = audioCtx.createOscillator();
+  oscA.type = 'sawtooth';
+  oscB.type = 'sawtooth';
+  oscA.frequency.value = midiToFreq(57 + semis);
+  oscB.frequency.value = midiToFreq(57 + semis) * 1.005;
+
+  var filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 750;
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.3);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4);
+
+  oscA.connect(filter);
+  oscB.connect(filter);
+  filter.connect(gain);
+  gain.connect(masterGain);
+  oscA.start();
+  oscB.start();
+  oscA.stop(audioCtx.currentTime + 1.5);
+  oscB.stop(audioCtx.currentTime + 1.5);
+}
+
+function voiceSpark(stepIndex) {
+  var semis = leadPenta[(stepIndex * 7) % leadPenta.length];
+  var osc = audioCtx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = midiToFreq(93 + semis);
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+
+  osc.connect(gain);
+  gain.connect(masterGain);
+  gain.connect(delayNode);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.65);
+}
+
+var running = false;
+var currentStep = -1;
+var timerId = null;
+var bpm = 122;
+var intensity = 6;
+var dmtMode = false;
+var energy = 0;
+
+var playBtn = document.getElementById('playBtn');
+var stopBtn = document.getElementById('stopBtn');
+var dmtBtn = document.getElementById('dmtBtn');
+var bpmRange = document.getElementById('bpmRange');
+var bpmValue = document.getElementById('bpmValue');
+var intensityRange = document.getElementById('intensityRange');
+var intensityValue = document.getElementById('intensityValue');
+var statusLine = document.getElementById('statusLine');
+var gridEl = document.getElementById('stepGrid');
+var lightTrack = document.getElementById('lightTrack');
+
+function stepMs() {
+  return (60 / bpm) / 4 * 1000;
+}
+
+var lightCells = [];
+
+(function buildLights() {
+  for (var i = 0; i < STEPS; i++) {
+    var light = document.createElement('div');
+    light.className = 'light';
+    lightTrack.appendChild(light);
+    lightCells.push(light);
+  }
+})();
+
+function paintLights() {
+  lightCells.forEach(function (el, i) {
+    el.classList.toggle('now', i === currentStep);
+  });
+}
+
+function clearLights() {
+  lightCells.forEach(function (el) {
+    el.classList.remove('now');
+  });
+}
+
+ROWS.forEach(function (row, rowIndex) {
+  var rowEl = document.createElement('div');
+  rowEl.className = 'seq-row';
+
+  var label = document.createElement('span');
+  label.className = 'row-label';
+  label.style.color = row.color;
+  label.textContent = row.name;
+  rowEl.appendChild(label);
+
+  var cells = document.createElement('div');
+  cells.className = 'cells';
+
+  for (var s = 0; s < STEPS; s++) {
+    (function (stepIndex) {
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell';
+      if (stepIndex % 4 === 0) cell.classList.add('beat4');
+
+      if (gridState[rowIndex][stepIndex]) {
+        cell.classList.add('on');
+        cell.style.background = row.color;
+        cell.style.boxShadow = '0 0 14px ' + row.color;
+      }
+
+      cell.addEventListener('click', function () {
+        gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
+        var active = gridState[rowIndex][stepIndex];
+        cell.classList.toggle('on', active);
+
+        if (active) {
+          cell.style.background = row.color;
+          cell.style.boxShadow = '0 0 14px ' + row.color;
+        } else {
+          cell.style.background = '';
+          cell.style.boxShadow = '';
+        }
+      });
+
+      cells.appendChild(cell);
+    })(s);
+  }
+
+  rowEl.appendChild(cells);
+  gridEl.appendChild(rowEl);
+});
+
+function tick() {
+  currentStep = (currentStep + 1) % STEPS;
+  paintLights();
+
+  ROWS.forEach(function (row, rowIndex) {
+    if (!gridState[rowIndex][currentStep]) return;
+
+    if (row.id === 'bass') voiceBass(currentStep);
+    if (row.id === 'lead') voiceLead(currentStep);
+    if (row.id === 'pad') voicePad(currentStep);
+    if (row.id === 'spark') voiceSpark(currentStep);
+
+    energy = Math.min(1.5, energy + 0.25 + intensity * 0.04);
+  });
+}
+
+function startEngine() {
+  if (running) return;
+
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  running = true;
+  currentStep = -1;
+  timerId = setInterval(tick, stepMs());
+  playBtn.classList.add('active');
+  statusLine.textContent = 'המסע החל ✦ המכונה נושמת בקצב ' + bpm + ' BPM';
+}
+
+function stopEngine() {
+  running = false;
+  if (timerId) clearInterval(timerId);
+  timerId = null;
+  playBtn.classList.remove('active');
+  clearLights();
+  statusLine.textContent = 'המכונה נחה ✦ הקיילודוסקוב עדיין זוכר אותך.';
+}
+
+playBtn.addEventListener('click', startEngine);
+stopBtn.addEventListener('click', stopEngine);
+
+bpmRange.addEventListener('input', function () {
+  bpm = Number(bpmRange.value);
+  bpmValue.textContent = bpmRange.value;
+
+  if (running) {
+    clearInterval(timerId);
+    timerId = setInterval(tick, stepMs());
+  }
+});
+
+intensityRange.addEventListener('input', function () {
+  intensity = Number(intensityRange.value);
+  intensityValue.textContent = intensityRange.value;
+  document.documentElement.style.setProperty('--intensity', String(intensity / 10));
+});
+
+dmtBtn.addEventListener('click', function () {
+  dmtMode = !dmtMode;
+  document.body.classList.toggle('dmt', dmtMode);
+  dmtBtn.classList.toggle('active', dmtMode);
+  statusLine.textContent = dmtMode
+    ? 'מצב DMT פעיל ✦ השער נפתח למלואו'
+    : 'מצב DMT כבוי ✦ עדיין פסיכודלי, רק מנומס יותר';
+});
+
+var cosmosCanvas = document.getElementById('cosmosCanvas');
+var cosmosCtx = cosmosCanvas.getContext('2d');
+var hueShift = 0;
+
+function resizeCosmos() {
+  cosmosCanvas.width = window.innerWidth;
+  cosmosCanvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', resizeCosmos);
+resizeCosmos();
+
+var particles = [];
+for (var p = 0; p < 90; p++) {
+  particles.push({
+    angle: Math.random() * Math.PI * 2,
+    radius: Math.random() * 0.5 + 0.1,
+    speed: Math.random() * 0.004 + 0.0015,
+    size: Math.random() * 2.4 + 0.6
+  });
+}
+
+function drawCosmos(time) {
+  var w = cosmosCanvas.width;
+  var h = cosmosCanvas.height;
+
+  cosmosCtx.fillStyle = 'rgba(4, 2, 14, 0.28)';
+  cosmosCtx.fillRect(0, 0, w, h);
+
+  var cx = w / 2;
+  var cy = h / 2;
+  var segments = dmtMode ? 12 : 8;
+  var baseRadius = Math.min(w, h) * 0.32;
+
+  hueShift += (dmtMode ? 1.6 : 0.6) + energy * 2;
+
+  cosmosCtx.save();
+  cosmosCtx.translate(cx, cy);
+  cosmosCtx.rotate(time * 0.00006 * (dmtMode ? 2.4 : 1));
+
+  for (var sIndex = 0; sIndex < segments; sIndex++) {
+    cosmosCtx.rotate((Math.PI * 2) / segments);
+
+    var hue = (hueShift + sIndex * (360 / segments)) % 360;
+    var wave = Math.sin(time * 0.0012 + sIndex) * 18;
+    var radius = baseRadius * (0.55 + 0.25 * Math.sin(time * 0.0007 + sIndex * 0.8)) + wave + energy * 60;
+
+    cosmosCtx.strokeStyle = 'hsla(' + hue + ', 100%, 62%, 0.5)';
+    cosmosCtx.lineWidth = 1.6 + energy * 2;
+    cosmosCtx.beginPath();
+    cosmosCtx.arc(0, 0, Math.max(20, radius), sIndex * 0.4, sIndex * 0.4 + Math.PI * 0.9);
+    cosmosCtx.stroke();
+  }
+
+  cosmosCtx.restore();
+
+  particles.forEach(function (pt) {
+    pt.radius += pt.speed * (0.6 + energy) * (dmtMode ? 2 : 1);
+    if (pt.radius > 0.75) pt.radius = 0.08;
+
+    var px = cx + Math.cos(pt.angle + time * 0.00012) * pt.radius * Math.min(w, h);
+    var py = cy + Math.sin(pt.angle + time * 0.00012) * pt.radius * Math.min(w, h);
+    var pHue = (hueShift + pt.radius * 500) % 360;
+
+    cosmosCtx.fillStyle = 'hsla(' + pHue + ', 100%, 70%, ' + Math.min(1, 0.25 + pt.radius) + ')';
+    cosmosCtx.beginPath();
+    cosmosCtx.arc(px, py, pt.size + energy * 2, 0, Math.PI * 2);
+    cosmosCtx.fill();
+  });
+
+  energy *= 0.94;
+}
+
+function animationLoop(time) {
+  drawCosmos(time);
+  requestAnimationFrame(animationLoop);
+}
+
+requestAnimationFrame(animationLoop);
+</script>
+</body>
+</html>
