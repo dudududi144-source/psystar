@@ -18,6 +18,13 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - SyncProtocol — הודעות סנכרון, תפקידים, בחירת מוביל דטרמיניסטית ✔
 - סנכרון רב-מכשירי חי בקונסולה — מוביל/עוקב, play/stop/bpm/scene/grid בזמן אמת ✔
 
+## שלב 6 · נהגים אמיתיים — הושלם ✔
+- MidiDriver — בניית בייטים, מעקב קולות, panic לשחרור כל התווים ✔
+- SessionRecorder — לכידת אירועי מסע עם זמן יחסי להתחלה ✔
+- הקלטת מסע חיה בקונסולה — MediaRecorder ישירות מה-liמיטר, ייצוא webm ✔
+- יציאת MIDI אמיתית — Web MIDI אל התקנים חיצוניים ✔
+- טבעת ספקטרום חיה — 36 קווי תדר סביב הקיילודוסקופ ✔
+
 ## אופק · מה הלאה
 - חיבור ישיר ל-psy-foundation ברגע ש-transport יתקנן
 - MIDI driver אמיתי
