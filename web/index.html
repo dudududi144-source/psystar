@@ -6,6 +6,10 @@
 <meta name="color-scheme" content="dark"/>
 <title>PSYSTAR ✦ מכונת התודעה · שלב 4</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/heebo@5.0.12/index.css"/>
+<link rel="manifest" href="./manifest.webmanifest"/>
+<meta name="theme-color" content="#7b2ff7"/>
+<link rel="apple-touch-icon" href="./icons/icon-192.png"/>
+<link rel="icon" type="image/png" href="./icons/icon-192.png"/>
 <style>
 :root {
   --magenta: #ff2bd6;
@@ -312,7 +316,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 8 · ספריית החלומות · שמירה ושיתוף</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 9 · מקדש נייד · נגינה חיה · PWA</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -480,7 +484,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">ספריית חלומות · יומני מסע ניידים · סנכרון · הקלטה · MIDI · ספקטרום · שום סוד לא נשמר כאן</p>
+  <p class="hint">מקשים 1-4 מנגנים ערוצים · A עד K מנגנים תווים · מתקין כאפליקציה · עובד אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2115,6 +2119,95 @@ journeyImportInput.addEventListener('change', function () {
   reader.readAsText(file);
   journeyImportInput.value = '';
 });
+
+var KEY_ROWS = {
+  'Digit1': 0,
+  'Digit2': 1,
+  'Digit3': 2,
+  'Digit4': 3
+};
+
+var KEY_NOTES = {
+  'KeyA': 0,
+  'KeyS': 1,
+  'KeyD': 2,
+  'KeyF': 3,
+  'KeyG': 4,
+  'KeyH': 5,
+  'KeyJ': 6,
+  'KeyK': 7
+};
+
+function ensureLiveAudio() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function liveTriggerRow(rowIndex) {
+  ensureLiveAudio();
+
+  var when = audioCtx.currentTime + 0.01;
+  var stepIndex = Math.max(0, currentStep);
+
+  if (rowIndex === 0) voiceBass(stepIndex, when);
+  if (rowIndex === 1) voiceLead(stepIndex, when);
+  if (rowIndex === 2) voicePad(stepIndex, when);
+  if (rowIndex === 3) voiceSpark(stepIndex, when);
+
+  energy = Math.min(1.5, energy + 0.3);
+  statusLine.textContent = 'נגינה חיה ✦ ' + ROWS[rowIndex].name;
+}
+
+function livePlayNote(scaleIndex) {
+  if (!claimVoice()) return;
+
+  ensureLiveAudio();
+
+  var when = audioCtx.currentTime + 0.01;
+  var octave = Math.floor(scaleIndex / leadPenta.length);
+  var semis = leadPenta[scaleIndex % leadPenta.length] + octave * 12;
+
+  var osc = audioCtx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.value = midiToFreq(69 + semis);
+
+  var gain = audioCtx.createGain();
+  var atk = Math.max(0.003, attackTime);
+  var tail = 0.35 + releaseTime * 0.5;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.22, when + atk);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
+
+  osc.connect(gain);
+  gain.connect(voiceBus);
+  gain.connect(delaySend);
+  gain.connect(reverbSend);
+  osc.start(when);
+  osc.stop(when + atk + tail + 0.05);
+  osc.onended = releaseVoice;
+
+  energy = Math.min(1.5, energy + 0.25);
+  statusLine.textContent = 'נגינה חיה ✦ תו ' + (scaleIndex + 1);
+}
+
+window.addEventListener('keydown', function (e) {
+  if (e.repeat) return;
+
+  var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if (KEY_ROWS[e.code] !== undefined) {
+    liveTriggerRow(KEY_ROWS[e.code]);
+  } else if (KEY_NOTES[e.code] !== undefined) {
+    livePlayNote(KEY_NOTES[e.code]);
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
 
 var journeyArmed = false;
 var journeyEvents = [];
