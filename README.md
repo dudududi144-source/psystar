@@ -2,14 +2,15 @@
 
 # ✦ PSYSTAR ✦ מכונת התודעה ✦
 
-**התקן מוזיקלי פסיכודלי מקצה לקצה — לב קצב, סינתזה, מסע ויזואלי, רשת משפחתית, נהגים אמיתיים, זיכרון, ספריית חלומות, מקדש נייד ומגע חי במערכת קנונית אחת**
+**התקן מוזיקלי פסיכודלי מקצה לקצה — לב קצב, סינתזה, מסע ויזואלי, רשת משפחתית, גשרים בין עולמות, נהגים אמיתיים, זיכרון, ספריית חלומות, מקדש נייד ומגע חי במערכת קנונית אחת**
 
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-10%2F10-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-11%2F11-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
+![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
 ![license](https://img.shields.io/badge/license-MIT-ffd166?style=for-the-badge)
 
 *שום דבר כאן לא מקרי. כל החלטה עברה Roast Gate. כל קוד נבדק. כל פיקסל נושם.*
@@ -25,8 +26,8 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - **Core** — תשתיות יסוד: תוצאות, לוגים, אירועים, שעונים, היסטוריה.
 - **Domain** — המודל המוזיקלי: תבניות, תחבורה, התקנים, סצנות, שירים, קצב אוקלידי, פריסטים, יומני מסע, ספריות.
 - **Protocol** — השפה המשותפת: הודעות וקידוד.
-- **Engine** — הלב: תזמון, ADSR, ניהול קולות, ראק אפקטים, MIDI פנימה והחוצה, הקלטה, טאפ קצב.
-- **Integration** — הגשר אל משפחת PSY: foundation-bridge, device-registry, sync-protocol.
+- **Engine** — הלב: תזמון, ADSR, ניהול קולות, ראק אפקטים, MIDI דו-כיווני, הקלטה, טאפ קצב.
+- **Integration** — הגשרים: foundation-bridge, device-registry, sync-protocol, p2p-signaling.
 - **UI** — המסע: קונסולת DMT חיה, נגינה חיה, מגע חי, ומקדש PWA נייד.
 
 ## ✦ מה המכונה יודעת
@@ -39,8 +40,9 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - חלימה: מורפינג חי בין כל שני עולמות
 - אלכימיית קצב: יוצר אוקלידי לכל ערוץ עם סיבוב
 - רשת משפחתית: מוביל/עוקב, סנכרון play/stop/bpm/scene/grid
+- **גשר בין עולמות: סנכרון P2P בין מכשירים רחוקים, WebRTC ללא שרת**
 - הקלטת מסע חיה וייצוא כקובץ
-- MIDI דו-כיווני: יציאה לסינתזה חיצונית + כניסה ממקלדת, עם פאניקה
+- MIDI דו-כיווני: יציאה לסינתזה + כניסה ממקלדת, עם פאניקה
 - טבעת ספקטרום חיה סביב הקיילודוסקופ
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
@@ -66,13 +68,13 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 פתחו את `web/index.html` בדפדפן, לחצו **הפעלה**, והניחו לקיילודוסקוב לנשום.
 
-מגע חי: **טאפ קצב ◉** קולט BPM מהידיים · **↶ ביטול** או Ctrl+Z מחזירים עריכות רשת · **כניסת MIDI 🎹** מחברת מקלדת חיצונית שמנגנת ישירות על מנוע הסינתזה.
+**גשר בין עולמות:** במכשיר א' לחצו **יצירת גשר (מארח)** והעתיקו את האות. במכשיר ב' הדביקו ולחצו **הצטרפות (אורח)**, העתיקו את התשובה חזרה. במכשיר א' הדביקו ולחצו **קבלת תשובה** — ושני העולמות מנגנים יחד, ישירות, בלי שרת.
 
 ## ✦ מבנה
 
 - `docs/` — ארכיטקטורה, roast, החלטות, בדיקות, עיצוב, אינטגרציה, מפת דרכים
 - `src/` — core · domain · protocol · engine · integration · ui
-- `tests/` — unit · domain · protocol · engine · integration · drivers · journey · library · pwa · touch
+- `tests/` — unit · domain · protocol · engine · integration · drivers · journey · library · pwa · touch · p2p
 - `scripts/` — check · manifest
 - `web/` — מסך ה-DMT, manifest, service worker, אייקוני מנדלה
 - `.github/` — CI
@@ -86,6 +88,6 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 <div align="center">
 
-**PSYSTAR — לא מכשיר. שער. צומת. כלי. זיכרון. ספרייה. מקדש. ומכונה שמקשיבה.**
+**PSYSTAR — לא מכשיר. שער. צומת. כלי. זיכרון. ספרייה. מקדש. מכונה שמקשיבה. וגשר בין עולמות.**
 
 </div>
