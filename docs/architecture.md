@@ -29,6 +29,10 @@ euclidean(pulses, steps, rotation) מחלק פעימות באופן שווה כ�
 
 יומן מסע חמוש לוכד כל צעד מנוגן כמסיכת ערוצים וכל מעבר סצנה, עם זמן יחסי להתחלה. ניגון יומן מתזמן את האירועים מחדש: סצנות מוחלפות, קולות מנוגנים, תאורה רצה, ואפילו MIDI נשלח החוצה. יצוא JSON הופך מסע שלם לאובייקט נייד בין מכשירים.
 
+## זרימת ספריית החלומות (Library)
+
+סצנות ויומנים נשמרים כ-payload JSON בתוך slots עם שם וסוג. הקיבולת מוגבלת, והוותיקים ביותר מתפנים אוטומטית. הכול משורשר ל-localStorage, ויומנים יכולים גם לצאת כקובץ JSON נייד בין מכשירים — כך מסע שנוגן במכשיר אחד יכול להינגן במכשיר אחר.
+
 ## זרימת רשת (Multi-Device Sync)
 
 SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפקידי solo/leader/follower. הקונסולה מממשת זאת מעל BroadcastChannel: מוביל משדר כל שינוי, עוקבים מחילים, presence שומר על מניית מכשירים חיה. FoundationBridge מחבר את כל זה החוצה אל psy-foundation דרך port יחיד ומבודד.
@@ -45,6 +49,7 @@ SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפ
 - domain/euclidean: חלוקת פעימות שווה, סיבוב, צפיפות.
 - domain/preset: לכידת מצב מלא, ולידציה, מורפינג בין עולמות.
 - domain/journey: יומן מסע — אירועים, זמן יחסי, קידוד ושיתוף.
+- domain/library: ספריית חלומות — slots עם קיבולת, פינוי ישנים, serialize.
 - domain/transport: זמן, מצב ריצה, התקדמות אימוטבילית.
 - protocol/codec: serialize/deserialize עם ולידציה מלאה.
 - engine/scheduler: לא יודע מהו סאונד אמיתי — רק פולט אירועים.
