@@ -33,6 +33,8 @@ export * from './engine/humanizer.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
+export * from './integration/foundation-protocol.ts';
+export * from './integration/foundation-device.ts';
 export * from './integration/p2p-signaling.ts';
 export * from './ui/state.ts';
 export * from './ui/render.ts';
