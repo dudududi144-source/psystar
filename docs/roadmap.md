@@ -88,8 +88,14 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - שער Foundation בקונסולה — חיבור לערוץ, מניית אירועים חיה, פרסום beat/note מכל צעד מנוגן ✔
 - עמידה ב-Rule 0: אפס שינויים ב-foundation, המראות ב-PSYSTAR בלבד — מוכן כצרכן שני ל-Phase D של תוכנית הנדידה ✔
 
+## שלב 17 · חבילות משפחתיות — הושלם ✔
+- Pack domain — אגדים ניידים של סצנות, יומנים ושירים עם ולידציה מלאה ✔
+- mergePackIntoLibrary — מיזוג לספרייה עם שמירה על מגבלת קיבולת ✔
+- builtInPack — חבילת בית אוצרת: 2 סצנות, יומן מסע ושיר מוכנים לנגינה ✔
+- בקונסולה: חבילת הבית ✦, יצוא ספרייה כ-psystar-pack.json, יבוא חבילה עם ולידציה אירוע-אירוע ✔
+- תיקון: שוחזרו ייצואי foundation-protocol ו-foundation-device שנשמטו בטעות מעדכון index ✔
+
 ## אופק · מה הלאה
 - WebSocket bridge בין מכשירים רחוקים (מעבר לגשר P2P הידני)
 - עורך piano-roll גרפי עם עריכת velocity לצעד
-- ספריית מסעות משותפת לכל המשפחה
 - חיבור transport אמיתי ברגע ש-PSY4 MusicalTransport יתקנן ב-foundation
