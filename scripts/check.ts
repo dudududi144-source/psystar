@@ -40,12 +40,17 @@ const requiredFiles = [
   'tests/preset.test.ts',
   'tests/journey.test.ts',
   'tests/library.test.ts',
+  'tests/pwa.test.ts',
   'tests/foundation-bridge.test.ts',
   'tests/device-registry.test.ts',
   'tests/sync-protocol.test.ts',
   'tests/midi-driver.test.ts',
   'tests/recorder.test.ts',
   'web/index.html',
+  'web/manifest.webmanifest',
+  'web/sw.js',
+  'web/icons/icon-192.png',
+  'web/icons/icon-512.png',
   'docs/design.md',
   'docs/integration.md'
 ];
