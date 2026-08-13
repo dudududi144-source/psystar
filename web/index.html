@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 15 · עורך השירים · שרשרת סצנות</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 16 · אזרח ה-Foundation · צרכן קנוני</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -452,6 +452,27 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   
+  <section class="rack">
+    <span class="rack-title">שער ה-Foundation · צרכן קנוני</span>
+    <div class="dial">
+      <label>סטטוס</label>
+      <span id="foundStatus" style="color: var(--cyan); font-weight: 800;">מנותק</span>
+    </div>
+    <div class="dial">
+      <label>אירועים</label>
+      <span id="foundEvents" style="color: var(--gold); font-weight: 800;">—</span>
+    </div>
+    <div class="dial">
+      <label>אחרון</label>
+      <span id="foundLast" style="color: var(--magenta); font-weight: 800;">—</span>
+    </div>
+    <button id="foundConnectBtn" class="orb ghost" type="button">חיבור לערוץ ✦</button>
+    <div class="dial">
+      <label>יכולות</label>
+      <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.72rem; direction: ltr;">audio · midi · 28 voices · 12ms · instrument/sequencer/visualizer/bridge</span>
+    </div>
+  </section>
+
   <section class="rack" style="flex-direction: column; align-items: stretch;">
     <span class="rack-title">גשר בין עולמות · P2P ללא שרת</span>
     <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
@@ -577,7 +598,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">עורך שירים · מעבדת אבולוציה · אקורדים · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1764,6 +1785,7 @@ function scheduleLoop() {
 
     var playTime = nextStepTime + swingOffset;
     var anyActive = triggerStepVoices(nextStep, playTime);
+    foundPublishStep(nextStep);
     visualQueue.push({ step: nextStep, time: playTime, active: anyActive });
     advanceSongIfNeeded();
     arrangerTick();
@@ -2516,6 +2538,153 @@ function arrangerTick() {
     sendP2p('scene', { index: sceneIdx });
     captureSceneEvent(sceneIdx);
     statusLine.textContent = 'השיר מתקדם ✦ ' + SCENES[sceneIdx].name;
+  }
+}
+
+var foundChannel = null;
+var foundDevice = null;
+var foundConnected = false;
+
+var foundStatusEl = document.getElementById('foundStatus');
+var foundEventsEl = document.getElementById('foundEvents');
+var foundLastEl = document.getElementById('foundLast');
+var foundConnectBtn = document.getElementById('foundConnectBtn');
+
+function foundValidEvent(evt) {
+  if (!evt || typeof evt !== 'object' || typeof evt.at !== 'number') return false;
+
+  switch (evt.type) {
+    case 'beat':
+      return typeof evt.beat === 'number' && typeof evt.bar === 'number';
+    case 'section':
+      return typeof evt.section === 'string' && typeof evt.bar === 'number';
+    case 'energy':
+      return typeof evt.energy === 'number';
+    case 'drop':
+      return typeof evt.intensity === 'number';
+    case 'note':
+      return typeof evt.note === 'number' && typeof evt.velocity === 'number' &&
+        typeof evt.duration === 'number' && typeof evt.channel === 'string';
+    case 'pattern':
+      return typeof evt.patternId === 'string' && typeof evt.trackId === 'string';
+    default:
+      return false;
+  }
+}
+
+function foundMakeChannel(name) {
+  var listeners = [];
+  var closed = false;
+
+  return {
+    name: name,
+    subscribe: function (listener) {
+      if (closed) throw new Error('Channel is closed');
+      listeners.push(listener);
+      return function () {
+        var idx = listeners.indexOf(listener);
+        if (idx !== -1) listeners.splice(idx, 1);
+      };
+    },
+    publish: function (evt) {
+      if (closed) return;
+      var snapshot = listeners.slice();
+      for (var i = 0; i < snapshot.length; i++) snapshot[i](evt);
+    },
+    close: function () {
+      closed = true;
+      listeners = [];
+    },
+    subscriberCount: function () {
+      return listeners.length;
+    }
+  };
+}
+
+function foundMakeDevice(id) {
+  var eventCount = 0;
+  var handler = null;
+
+  return {
+    id: id,
+    capabilities: function () {
+      return {
+        audio: true,
+        midi: true,
+        inputs: 2,
+        outputs: 2,
+        voices: 28,
+        latencyMs: 12,
+        roles: ['instrument', 'sequencer', 'visualizer', 'bridge']
+      };
+    },
+    onEvent: function (evt) {
+      if (!foundValidEvent(evt)) return;
+      eventCount++;
+      if (handler) handler(evt);
+    },
+    setHandler: function (h) {
+      handler = h;
+    },
+    eventsReceived: function () {
+      return eventCount;
+    }
+  };
+}
+
+foundConnectBtn.addEventListener('click', function () {
+  if (foundConnected) {
+    if (foundChannel) foundChannel.close();
+    foundChannel = null;
+    foundDevice = null;
+    foundConnected = false;
+    foundConnectBtn.classList.remove('active');
+    foundStatusEl.textContent = 'מנותק';
+    foundEventsEl.textContent = '—';
+    foundLastEl.textContent = '—';
+    statusLine.textContent = 'שער ה-Foundation נסגר';
+    return;
+  }
+
+  foundChannel = foundMakeChannel('psystar-gateway');
+  foundDevice = foundMakeDevice(deviceId);
+
+  foundDevice.setHandler(function (evt) {
+    foundEventsEl.textContent = String(foundDevice.eventsReceived());
+    foundLastEl.textContent = evt.type;
+    energy = Math.min(1.5, energy + 0.04);
+  });
+
+  foundChannel.subscribe(function (evt) {
+    foundDevice.onEvent(evt);
+  });
+
+  foundConnected = true;
+  foundConnectBtn.classList.add('active');
+  foundStatusEl.textContent = 'מחובר ✦ ' + foundChannel.name;
+  statusLine.textContent = 'שער ה-Foundation פתוח ✦ PSYSTAR מחובר כצרכן קנוני';
+});
+
+function foundPublishStep(stepIndex) {
+  if (!foundConnected || !foundChannel) return;
+
+  var now = Date.now();
+
+  if (stepIndex % 4 === 0) {
+    foundChannel.publish({ type: 'beat', beat: Math.floor(stepIndex / 4), bar: 0, at: now });
+  }
+
+  for (var fr = 0; fr < ROWS.length; fr++) {
+    if (gridState[fr][stepIndex]) {
+      foundChannel.publish({
+        type: 'note',
+        note: 45 + fr * 12,
+        velocity: 100,
+        duration: 0.1,
+        channel: ROWS[fr].id,
+        at: now
+      });
+    }
   }
 }
 
