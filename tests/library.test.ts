@@ -64,3 +64,8 @@ test('decodeLibrary rejects garbage', () => {
   expect(decodeLibrary('not-json')).toBeNull();
   expect(decodeLibrary('{"items":[{"name":""}]}')).toBeNull();
 });
+
+
+test('isValidItem accepts song kind', () => {
+  expect(isValidItem({ name: 'שיר ראשון', kind: 'song', createdAt: 1, payload: '{}' })).toBe(true);
+});
