@@ -2385,6 +2385,11 @@ dreamLoadBtn.addEventListener('click', function () {
 dreamDeleteBtn.addEventListener('click', function () {
   var name = dreamSelect.value;
 
+  if (!libraryFind(name)) {
+    statusLine.textContent = 'אין חלום למחיקה ✧ בחרו פריט מהספרייה';
+    return;
+  }
+
   dreamLibrary = {
     items: dreamLibrary.items.filter(function (item) {
       return item.name !== name;
@@ -3325,6 +3330,14 @@ function toggleRecording() {
   };
 
   mediaRecorder.onstop = function () {
+    recordBtn.classList.remove('recording');
+    recordBtn.textContent = 'הקלטת מסע ●';
+
+    if (recordedChunks.length === 0) {
+      statusLine.textContent = 'ההקלטה ריקה ✦ שום דבר לא נלכד';
+      return;
+    }
+
     var blob = new Blob(recordedChunks, { type: 'audio/webm' });
     var url = URL.createObjectURL(blob);
     var anchor = document.createElement('a');
@@ -3336,8 +3349,6 @@ function toggleRecording() {
       URL.revokeObjectURL(url);
     }, 3000);
 
-    recordBtn.classList.remove('recording');
-    recordBtn.textContent = 'הקלטת מסע ●';
     var seconds = Math.round((Date.now() - recorderStartTime) / 1000);
     statusLine.textContent = 'המסע הוקלט ✦ ' + seconds + ' שניות של תודעה ירדו כקובץ';
   };
