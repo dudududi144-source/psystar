@@ -95,7 +95,13 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - בקונסולה: חבילת הבית ✦, יצוא ספרייה כ-psystar-pack.json, יבוא חבילה עם ולידציה אירוע-אירוע ✔
 - תיקון: שוחזרו ייצואי foundation-protocol ו-foundation-device שנשמטו בטעות מעדכון index ✔
 
+## שלב 18 · עומק דינמי — הושלם ✔
+- Velocity domain — שלוש מדרגות עוצמה (100% / 75% / 50%), clamp מוזיקלי, grid דינמי ✔
+- בקונסולה: קליק ימני על כל צעד מחליף מדרגה; שקיפות התא משקפת את העוצמה ✔
+- שכבת ביצוע: humanVelocity מכפיל במדרגה — יחד עם אקסנטים ונשימה אנושית ✔
+- סנכרון תואם לאחור: broadcastGrid נושא גם velocity, עוקבים מחילים אם קיים ✔
+
 ## אופק · מה הלאה
 - WebSocket bridge בין מכשירים רחוקים (מעבר לגשר P2P הידני)
-- עורך piano-roll גרפי עם עריכת velocity לצעד
+- עורך piano-roll גרפי מלא (מחוץ לרשת ה-16 צעדים)
 - חיבור transport אמיתי ברגע ש-PSY4 MusicalTransport יתקנן ב-foundation
