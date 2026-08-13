@@ -300,7 +300,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 6 · נהגים אמיתיים · הקלטה · MIDI · ספקטרום</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 7 · זיכרון המסע · יומן · יצוא · יבוא</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -423,6 +423,15 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">זיכרון המסע · יומן · יצוא · יבוא</span>
+    <button id="journeyBtn" class="orb ghost" type="button">יומן מסע ●</button>
+    <button id="replayBtn" class="orb ghost" type="button">ניגון יומן ✦</button>
+    <button id="exportBtn" class="orb ghost" type="button">יצוא סצנה ⬇</button>
+    <button id="importBtn" class="orb ghost" type="button">יבוא סצנה ⬆</button>
+    <input id="importInput" type="file" accept=".json,application/json" style="display:none;"/>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">נהגים אמיתיים · הקלטה ו-MIDI</span>
     <button id="recordBtn" class="orb ghost" type="button">הקלטת מסע ●</button>
     <button id="midiBtn" class="orb ghost" type="button">יציאת MIDI</button>
@@ -446,7 +455,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">פריסטים · מורפינג · אוקלידי · סנכרון רב-מכשירי · הקלטת מסע · MIDI · ספקטרום חי · שום סוד לא נשמר כאן</p>
+  <p class="hint">יומן מסע · ניגון זיכרון · יצוא ויבוא סצנות · סנכרון · הקלטה · MIDI · ספקטרום · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1046,6 +1055,7 @@ function applyScene(index) {
   setSceneGrid(index);
   markActivePreset(-1);
   postSync('scene', { index: index });
+  captureSceneEvent(index);
   statusLine.textContent = 'סצנה נטענה ✦ ' + SCENES[index].name;
 }
 
@@ -1541,6 +1551,20 @@ function triggerStepVoices(stepIndex, when) {
     if (ROWS[r].id === 'spark') voiceSpark(stepIndex, when);
   }
 
+  if (journeyArmed && !replayActive && anyActive) {
+    var journeyMask = 0;
+
+    for (var jr = 0; jr < ROWS.length; jr++) {
+      if (gridState[jr][stepIndex]) journeyMask |= (1 << jr);
+    }
+
+    journeyEvents.push({
+      time: performance.now() - journeyStart,
+      type: 'step',
+      data: { step: stepIndex, mask: journeyMask }
+    });
+  }
+
   return anyActive;
 }
 
@@ -1554,6 +1578,7 @@ function advanceSongIfNeeded() {
     songSceneIndex = (songSceneIndex + 1) % SCENES.length;
     setSceneGrid(songSceneIndex);
     postSync('scene', { index: songSceneIndex });
+    captureSceneEvent(songSceneIndex);
     statusLine.textContent = 'המסע מתקדם ✦ ' + SCENES[songSceneIndex].name;
   }
 }
@@ -1817,6 +1842,181 @@ function drawCosmos(time) {
 
   energy *= 0.94;
 }
+
+var journeyArmed = false;
+var journeyEvents = [];
+var journeyStart = 0;
+var replayActive = false;
+var replayTimers = [];
+
+var journeyBtn = document.getElementById('journeyBtn');
+var replayBtn = document.getElementById('replayBtn');
+var exportBtn = document.getElementById('exportBtn');
+var importBtn = document.getElementById('importBtn');
+var importInput = document.getElementById('importInput');
+
+function captureSceneEvent(index) {
+  if (!journeyArmed || replayActive) return;
+
+  journeyEvents.push({
+    time: performance.now() - journeyStart,
+    type: 'scene',
+    data: { index: index }
+  });
+}
+
+journeyBtn.addEventListener('click', function () {
+  journeyArmed = !journeyArmed;
+  journeyBtn.classList.toggle('active', journeyArmed);
+
+  if (journeyArmed) {
+    journeyEvents = [];
+    journeyStart = performance.now();
+    statusLine.textContent = 'יומן המסע חמוש ● כל צעד וסצנה ייזכרו';
+  } else {
+    statusLine.textContent = 'היומן נשמר בזיכרון ✦ ' + journeyEvents.length + ' אירועים מחכים לניגון';
+  }
+});
+
+function stopJourneyReplay() {
+  for (var i = 0; i < replayTimers.length; i++) {
+    clearTimeout(replayTimers[i]);
+  }
+  replayTimers = [];
+  replayActive = false;
+}
+
+function playJourney() {
+  if (journeyEvents.length === 0) {
+    statusLine.textContent = 'אין יומן מסע עדיין ✦ חמשו יומן ונגנו קודם';
+    return;
+  }
+
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  replayActive = true;
+  replayTimers = [];
+  statusLine.textContent = 'היומן מתנגן ✦ המכונה נזכרת במסע';
+
+  journeyEvents.forEach(function (evt) {
+    var timer = setTimeout(function () {
+      if (!replayActive) return;
+
+      if (evt.type === 'scene') {
+        var sceneIdx = evt.data.index;
+        if (sceneIdx >= 0 && sceneIdx < SCENES.length) setSceneGrid(sceneIdx);
+      } else if (evt.type === 'step') {
+        var stepIdx = evt.data.step;
+        var mask = evt.data.mask;
+
+        currentStep = stepIdx;
+        paintLights();
+
+        var when = audioCtx.currentTime + 0.02;
+
+        for (var r = 0; r < ROWS.length; r++) {
+          if (!(mask & (1 << r))) continue;
+
+          if (r === 0) voiceBass(stepIdx, when);
+          if (r === 1) voiceLead(stepIdx, when);
+          if (r === 2) voicePad(stepIdx, when);
+          if (r === 3) voiceSpark(stepIdx, when);
+
+          sendMidiTrigger(r, stepIdx);
+        }
+
+        energy = Math.min(1.5, energy + 0.25 + bassEnergy * 0.4);
+      }
+    }, evt.time);
+
+    replayTimers.push(timer);
+  });
+
+  var lastTime = journeyEvents[journeyEvents.length - 1].time;
+  replayTimers.push(setTimeout(function () {
+    replayActive = false;
+    statusLine.textContent = 'היומן הסתיים ✦ הזיכרון דוהה לאיטו';
+  }, lastTime + 600));
+}
+
+replayBtn.addEventListener('click', function () {
+  if (replayActive) {
+    stopJourneyReplay();
+    statusLine.textContent = 'ניגון היומן נעצר';
+    return;
+  }
+
+  playJourney();
+});
+
+exportBtn.addEventListener('click', function () {
+  var preset = captureCurrentPreset();
+  var json = JSON.stringify(preset, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-scene.json';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'הסצנה יוצאה ✦ שלחו אותה לכל מכשיר במשפחה';
+});
+
+importBtn.addEventListener('click', function () {
+  importInput.click();
+});
+
+importInput.addEventListener('change', function () {
+  var file = importInput.files && importInput.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+
+  reader.onload = function () {
+    try {
+      var parsed = JSON.parse(String(reader.result));
+
+      if (!parsed || !Array.isArray(parsed.rows) || parsed.rows.length !== ROWS.length || !parsed.params) {
+        throw new Error('invalid scene file');
+      }
+
+      var rows = parsed.rows.map(function (row) {
+        if (!Array.isArray(row) || row.length !== STEPS) throw new Error('bad row');
+        return row.map(function (cell) { return cell === true || cell === 1; });
+      });
+
+      var preset = {
+        name: typeof parsed.name === 'string' ? parsed.name : 'סצנה מיובאת',
+        rows: rows,
+        params: {
+          bpm: Number(parsed.params.bpm) || 122,
+          swing: Number(parsed.params.swing) || 0,
+          intensity: Number(parsed.params.intensity) || 6,
+          attack: Number(parsed.params.attack) || 8,
+          release: Number(parsed.params.release) || 300,
+          crush: Number(parsed.params.crush) || 0,
+          phaser: Number(parsed.params.phaser) || 0,
+          delay: Number(parsed.params.delay) || 50,
+          reverb: Number(parsed.params.reverb) || 45
+        }
+      };
+
+      applyPresetToConsole(preset);
+      markActivePreset(-1);
+      statusLine.textContent = 'סצנה מיובאת נטענה ✦ ' + preset.name;
+    } catch (err) {
+      statusLine.textContent = 'קובץ הסצנה לא תקין ✦ היבוא נדחה';
+    }
+  };
+
+  reader.readAsText(file);
+  importInput.value = '';
+});
 
 var limiterNode = null;
 
