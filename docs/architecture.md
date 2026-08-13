@@ -3,7 +3,7 @@
 ## השכבות
 
 1. **Core** — אבני יסוד חסרות תלות בדומיין: result, logger, event-bus, clock.
-2. **Domain** — המודל המוזיקלי: pattern, transport, device, scene, song.
+2. **Domain** — המודל המוזיקלי: pattern, transport, device, scene, song, euclidean, preset.
 3. **Protocol** — השפה: הודעות מובנות וקידוד בטוח.
 4. **Engine** — הלב: scheduler, lookahead-scheduler, envelope, voice-manager, effects-rack, audio-driver, foundation-adapter.
 5. **UI** — המסע: state reducer, render, וקונסולת DMT חיה ב-web.
@@ -16,6 +16,14 @@ Transport מייצר פעימה → LookaheadScheduler מתכנן צעדים ע�
 
 Song מגדיר שרשרת סצנות עם אורך לכל אחת. במהלך ניגון, sceneAtBar מחזיר את הסצנה הפעילה לפי ה-bar הגלובלי, והקונסולה מחליפה את הרשת בהתאם — מסע עם התחלה, עלייה ונחיתה.
 
+## זרימת זיכרון (Presets + Morphing)
+
+Preset לוכד את כל מצב המכונה — גריד + פרמטרים. morphPresets ממזג שני עולמות לפי t, הן בגריד (סף 0.5) והן בכל פרמטר. הקונסולה מאפשרת לכידת פורטל אישי, שחזורו, וחלימה חיה בין כל שני פריסטים.
+
+## יצירת קצב (Euclidean)
+
+euclidean(pulses, steps, rotation) מחלק פעימות באופן שווה ככל האפשר — הקצב הפסיכדלי הקלאסי. כל ערוץ בקונסולה מקבל יוצר אוקלידי עצמאי עם סיבוב, כך שניתן לארוג פוליריתמיה שלמה בלחיצה.
+
 ## גבולות אחריות
 
 - core/result: הצלחה או כשל, מפורש, בלי חריגות סמויות.
@@ -25,6 +33,8 @@ Song מגדיר שרשרת סצנות עם אורך לכל אחת. במהלך נ
 - domain/pattern: נתוני צעדים, גלישה בטוחה, מצב ריק בטוח.
 - domain/scene: סצנות קנוניות, ולידציה מבנית.
 - domain/song: שרשרת סצנות, loop, רזולוציה לפי bar.
+- domain/euclidean: חלוקת פעימות שווה, סיבוב, צפיפות.
+- domain/preset: לכידת מצב מלא, ולידציה, מורפינג בין עולמות.
 - domain/transport: זמן, מצב ריצה, התקדמות אימוטבילית.
 - protocol/codec: serialize/deserialize עם ולידציה מלאה.
 - engine/scheduler: לא יודע מהו סאונד אמיתי — רק פולט אירועים.
