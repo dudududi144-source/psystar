@@ -287,6 +287,18 @@ select option { background: #12082b; color: #fff; }
   0%, 100% { box-shadow: 0 0 10px rgba(255, 77, 109, 0.35); }
   50% { box-shadow: 0 0 32px rgba(255, 77, 109, 0.9); }
 }
+.dream-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #fff;
+  width: 150px;
+}
+
+.dream-input::placeholder { color: rgba(255, 255, 255, 0.4); }
 </style>
 </head>
 <body>
@@ -300,7 +312,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 7 · זיכרון המסע · יומן · יצוא · יבוא</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 8 · ספריית החלומות · שמירה ושיתוף</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -423,12 +435,25 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">ספריית החלומות · שמירה ושיתוף</span>
+    <input id="dreamName" class="dream-input" type="text" placeholder="שם החלום..." maxlength="24"/>
+    <button id="dreamSaveBtn" class="orb ghost" type="button">שמירת חלום ✧</button>
+    <button id="journeySaveBtn" class="orb ghost" type="button">שמירת יומן ✧</button>
+    <select id="dreamSelect"></select>
+    <button id="dreamLoadBtn" class="orb ghost" type="button">טעינת חלום</button>
+    <button id="dreamDeleteBtn" class="orb ghost" type="button">מחיקה</button>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">זיכרון המסע · יומן · יצוא · יבוא</span>
     <button id="journeyBtn" class="orb ghost" type="button">יומן מסע ●</button>
     <button id="replayBtn" class="orb ghost" type="button">ניגון יומן ✦</button>
     <button id="exportBtn" class="orb ghost" type="button">יצוא סצנה ⬇</button>
     <button id="importBtn" class="orb ghost" type="button">יבוא סצנה ⬆</button>
     <input id="importInput" type="file" accept=".json,application/json" style="display:none;"/>
+    <button id="journeyExportBtn" class="orb ghost" type="button">יצוא יומן ⬇</button>
+    <button id="journeyImportBtn" class="orb ghost" type="button">יבוא יומן ⬆</button>
+    <input id="journeyImportInput" type="file" accept=".json,application/json" style="display:none;"/>
   </section>
 
   <section class="rack">
@@ -455,7 +480,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יומן מסע · ניגון זיכרון · יצוא ויבוא סצנות · סנכרון · הקלטה · MIDI · ספקטרום · שום סוד לא נשמר כאן</p>
+  <p class="hint">ספריית חלומות · יומני מסע ניידים · סנכרון · הקלטה · MIDI · ספקטרום · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1843,6 +1868,254 @@ function drawCosmos(time) {
   energy *= 0.94;
 }
 
+var LIBRARY_KEY = 'psystar.library.v1';
+var MAX_DREAMS = 12;
+
+var dreamName = document.getElementById('dreamName');
+var dreamSaveBtn = document.getElementById('dreamSaveBtn');
+var journeySaveBtn = document.getElementById('journeySaveBtn');
+var dreamSelect = document.getElementById('dreamSelect');
+var dreamLoadBtn = document.getElementById('dreamLoadBtn');
+var dreamDeleteBtn = document.getElementById('dreamDeleteBtn');
+var journeyExportBtn = document.getElementById('journeyExportBtn');
+var journeyImportBtn = document.getElementById('journeyImportBtn');
+var journeyImportInput = document.getElementById('journeyImportInput');
+
+function loadLibraryFromStorage() {
+  try {
+    var raw = localStorage.getItem(LIBRARY_KEY);
+    if (!raw) return { items: [] };
+
+    var parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return { items: [] };
+
+    var valid = [];
+    for (var i = 0; i < parsed.items.length; i++) {
+      var item = parsed.items[i];
+      if (item && typeof item.name === 'string' && item.name.length > 0 &&
+          (item.kind === 'scene' || item.kind === 'journey') &&
+          typeof item.createdAt === 'number' && typeof item.payload === 'string') {
+        valid.push(item);
+      }
+    }
+
+    return { items: valid };
+  } catch (err) {
+    return { items: [] };
+  }
+}
+
+var dreamLibrary = loadLibraryFromStorage();
+
+function saveLibraryToStorage() {
+  try {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(dreamLibrary));
+  } catch (err) {}
+}
+
+function libraryAddItem(item) {
+  var withoutSame = dreamLibrary.items.filter(function (existing) {
+    return existing.name !== item.name;
+  });
+
+  var next = withoutSame.concat([item]);
+
+  if (next.length > MAX_DREAMS) {
+    next = next.slice(next.length - MAX_DREAMS);
+  }
+
+  dreamLibrary = { items: next };
+  saveLibraryToStorage();
+}
+
+function libraryFind(name) {
+  for (var i = 0; i < dreamLibrary.items.length; i++) {
+    if (dreamLibrary.items[i].name === name) return dreamLibrary.items[i];
+  }
+  return null;
+}
+
+function refreshDreamSelect() {
+  var keep = dreamSelect.value;
+  dreamSelect.innerHTML = '';
+
+  if (dreamLibrary.items.length === 0) {
+    var empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'הספרייה ריקה';
+    dreamSelect.appendChild(empty);
+    return;
+  }
+
+  dreamLibrary.items.forEach(function (item) {
+    var opt = document.createElement('option');
+    opt.value = item.name;
+    opt.textContent = (item.kind === 'journey' ? 'מסע: ' : 'חלום: ') + item.name;
+    dreamSelect.appendChild(opt);
+  });
+
+  if (keep && libraryFind(keep)) {
+    dreamSelect.value = keep;
+  } else {
+    dreamSelect.value = dreamLibrary.items[0].name;
+  }
+}
+
+dreamSaveBtn.addEventListener('click', function () {
+  var name = dreamName.value.trim();
+
+  if (!name) {
+    statusLine.textContent = 'תנו שם לחלום לפני השמירה';
+    return;
+  }
+
+  var preset = captureCurrentPreset();
+  preset.name = name;
+
+  libraryAddItem({
+    name: name,
+    kind: 'scene',
+    createdAt: Date.now(),
+    payload: JSON.stringify(preset)
+  });
+
+  refreshDreamSelect();
+  dreamSelect.value = name;
+  statusLine.textContent = 'החלום נשמר בספרייה ✧ ' + name;
+});
+
+journeySaveBtn.addEventListener('click', function () {
+  if (journeyEvents.length === 0) {
+    statusLine.textContent = 'אין יומן לשמירה ✦ חמשו יומן ונגנו קודם';
+    return;
+  }
+
+  var name = dreamName.value.trim() || 'יומן ' + new Date().toLocaleTimeString();
+
+  libraryAddItem({
+    name: name,
+    kind: 'journey',
+    createdAt: Date.now(),
+    payload: JSON.stringify({ name: name, bpm: bpm, events: journeyEvents })
+  });
+
+  refreshDreamSelect();
+  dreamSelect.value = name;
+  statusLine.textContent = 'היומן נשמר בספרייה ✧ ' + name;
+});
+
+dreamLoadBtn.addEventListener('click', function () {
+  var item = libraryFind(dreamSelect.value);
+
+  if (!item) {
+    statusLine.textContent = 'בחרו חלום מהספרייה';
+    return;
+  }
+
+  try {
+    if (item.kind === 'scene') {
+      var preset = JSON.parse(item.payload);
+
+      if (!preset || !Array.isArray(preset.rows) || preset.rows.length !== ROWS.length || !preset.params) {
+        throw new Error('bad scene payload');
+      }
+
+      applyPresetToConsole(preset);
+      markActivePreset(-1);
+      statusLine.textContent = 'החלום נטען ✧ ' + item.name;
+    } else {
+      var journey = JSON.parse(item.payload);
+
+      if (!journey || !Array.isArray(journey.events)) {
+        throw new Error('bad journey payload');
+      }
+
+      journeyEvents = journey.events.slice();
+      statusLine.textContent = 'יומן המסע נטען ✦ ' + journeyEvents.length + ' אירועים · לחצו ניגון יומן';
+    }
+  } catch (err) {
+    statusLine.textContent = 'החלום הזה פגום ולא ניתן לטעינה';
+  }
+});
+
+dreamDeleteBtn.addEventListener('click', function () {
+  var name = dreamSelect.value;
+
+  dreamLibrary = {
+    items: dreamLibrary.items.filter(function (item) {
+      return item.name !== name;
+    })
+  };
+
+  saveLibraryToStorage();
+  refreshDreamSelect();
+  statusLine.textContent = 'החלום נמחק מהספרייה';
+});
+
+journeyExportBtn.addEventListener('click', function () {
+  if (journeyEvents.length === 0) {
+    statusLine.textContent = 'אין יומן לייצוא ✦ חמשו יומן ונגנו קודם';
+    return;
+  }
+
+  var journey = { name: 'מסע PSYSTAR', bpm: bpm, events: journeyEvents };
+  var json = JSON.stringify(journey, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-journey.json';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'היומן יוצא ✦ שלחו אותו לכל מכשיר במשפחה';
+});
+
+journeyImportBtn.addEventListener('click', function () {
+  journeyImportInput.click();
+});
+
+journeyImportInput.addEventListener('change', function () {
+  var file = journeyImportInput.files && journeyImportInput.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+
+  reader.onload = function () {
+    try {
+      var parsed = JSON.parse(String(reader.result));
+
+      if (!parsed || !Array.isArray(parsed.events)) {
+        throw new Error('bad journey file');
+      }
+
+      var validEvents = [];
+      for (var i = 0; i < parsed.events.length; i++) {
+        var evt = parsed.events[i];
+        if (evt && typeof evt.time === 'number' && evt.time >= 0 &&
+            typeof evt.type === 'string' && evt.data && typeof evt.data === 'object') {
+          validEvents.push(evt);
+        }
+      }
+
+      if (validEvents.length === 0) {
+        throw new Error('empty journey');
+      }
+
+      journeyEvents = validEvents;
+      statusLine.textContent = 'יומן יובא ✦ ' + journeyEvents.length + ' אירועים · לחצו ניגון יומן';
+    } catch (err) {
+      statusLine.textContent = 'קובץ היומן לא תקין ✦ היבוא נדחה';
+    }
+  };
+
+  reader.readAsText(file);
+  journeyImportInput.value = '';
+});
+
 var journeyArmed = false;
 var journeyEvents = [];
 var journeyStart = 0;
@@ -2202,6 +2475,7 @@ loadSceneFromLocal();
 loadCustomFromStorage();
 rebuildPresetLibrary();
 rebuildMorphSelects();
+refreshDreamSelect();
 requestAnimationFrame(animationLoop);
 </script>
 </body>
