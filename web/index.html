@@ -303,6 +303,22 @@ select option { background: #12082b; color: #fff; }
 }
 
 .dream-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.p2p-area {
+  width: 100%;
+  height: 64px;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #9ff5ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  padding: 8px;
+  resize: vertical;
+  direction: ltr;
+}
+
+.p2p-area:focus { outline: 1px solid var(--cyan); }
 </style>
 </head>
 <body>
@@ -316,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 10 · מגע חי · טאפ · ביטול · MIDI פנימה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 11 · גשר בין עולמות · P2P ללא שרת</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -431,6 +447,18 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   
+  <section class="rack" style="flex-direction: column; align-items: stretch;">
+    <span class="rack-title">גשר בין עולמות · P2P ללא שרת</span>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+      <button id="p2pHostBtn" class="orb ghost" type="button">יצירת גשר (מארח)</button>
+      <button id="p2pJoinBtn" class="orb ghost" type="button">הצטרפות (אורח)</button>
+      <button id="p2pAcceptBtn" class="orb ghost" type="button">קבלת תשובה (מארח)</button>
+      <button id="p2pCopyBtn" class="orb ghost" type="button">העתקת אות</button>
+    </div>
+    <textarea id="p2pSignalIn" class="p2p-area" placeholder="הדביקו כאן אות גשר מהעולם השני..."></textarea>
+    <textarea id="p2pSignalOut" class="p2p-area" readonly placeholder="כאן ייווצר אות הגשר להעתקה..."></textarea>
+  </section>
+
   <section class="rack">
     <span class="rack-title">רשת משפחת PSY · סנכרון רב-מכשירי</span>
     <div class="dial">
@@ -492,7 +520,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">טאפ קצב · Ctrl+Z ביטול · מקלדת MIDI נכנסת · 1-4 ערוצים · A-K תווים · אפליקציה אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">גשר P2P בין עולמות · טאפ קצב · ביטול · MIDI דו-כיווני · אפליקציה אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1093,6 +1121,7 @@ function applyScene(index) {
   setSceneGrid(index);
   markActivePreset(-1);
   postSync('scene', { index: index });
+  sendP2p('scene', { index: index });
   captureSceneEvent(index);
   statusLine.textContent = 'סצנה נטענה ✦ ' + SCENES[index].name;
 }
@@ -1405,14 +1434,7 @@ soloBtn.addEventListener('click', function () { setSyncRole('solo'); });
 leaderBtn.addEventListener('click', function () { setSyncRole('leader'); });
 followerBtn.addEventListener('click', function () { setSyncRole('follower'); });
 
-function onSyncMessage(message) {
-  if (!message || message.deviceId === deviceId) return;
-
-  peers[message.deviceId] = Date.now();
-  updatePeerCount();
-
-  if (syncRole !== 'follower') return;
-
+function applyFollowerMessage(message) {
   if (message.kind === 'play') {
     if (message.payload && typeof message.payload.bpm === 'number') {
       setSlider(bpmRange, message.payload.bpm);
@@ -1443,6 +1465,17 @@ function onSyncMessage(message) {
   }
 }
 
+function onSyncMessage(message) {
+  if (!message || message.deviceId === deviceId) return;
+
+  peers[message.deviceId] = Date.now();
+  updatePeerCount();
+
+  if (syncRole !== 'follower') return;
+
+  applyFollowerMessage(message);
+}
+
 function prunePeers() {
   var now = Date.now();
   var changed = false;
@@ -1465,6 +1498,7 @@ function updatePeerCount() {
 
 function broadcastGrid() {
   postSync('grid', { rows: gridState });
+  sendP2p('grid', { rows: gridState });
 }
 
 var euclidWrap = document.getElementById('euclidRows');
@@ -1623,6 +1657,7 @@ function advanceSongIfNeeded() {
     songSceneIndex = (songSceneIndex + 1) % SCENES.length;
     setSceneGrid(songSceneIndex);
     postSync('scene', { index: songSceneIndex });
+    sendP2p('scene', { index: songSceneIndex });
     captureSceneEvent(songSceneIndex);
     statusLine.textContent = 'המסע מתקדם ✦ ' + SCENES[songSceneIndex].name;
   }
@@ -1670,6 +1705,7 @@ function startEngine() {
   timerId = setInterval(scheduleLoop, lookaheadMs);
   playBtn.classList.add('active');
   postSync('play', { bpm: bpm });
+  sendP2p('play', { bpm: bpm });
   statusLine.textContent = 'המסע החל ✦ תזמון lookahead חי בקצב ' + bpm + ' BPM';
 }
 
@@ -1681,6 +1717,7 @@ function stopEngine() {
   playBtn.classList.remove('active');
   clearLights();
   postSync('stop', {});
+  sendP2p('stop', {});
   statusLine.textContent = 'המכונה נחה ✦ הקיילודוסקוב עדיין זוכר אותך.';
 }
 
@@ -1706,6 +1743,7 @@ bpmRange.addEventListener('input', function () {
   bpm = Number(bpmRange.value);
   bpmValue.textContent = bpmRange.value;
   postSync('bpm', { bpm: Number(bpmRange.value) });
+  sendP2p('bpm', { bpm: Number(bpmRange.value) });
 });
 
 swingRange.addEventListener('input', function () {
@@ -1887,6 +1925,223 @@ function drawCosmos(time) {
 
   energy *= 0.94;
 }
+
+var p2pConn = null;
+var p2pChannel = null;
+var p2pRole = 'none';
+
+var p2pHostBtn = document.getElementById('p2pHostBtn');
+var p2pJoinBtn = document.getElementById('p2pJoinBtn');
+var p2pAcceptBtn = document.getElementById('p2pAcceptBtn');
+var p2pCopyBtn = document.getElementById('p2pCopyBtn');
+var p2pSignalIn = document.getElementById('p2pSignalIn');
+var p2pSignalOut = document.getElementById('p2pSignalOut');
+
+function p2pRtcConfig() {
+  return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+}
+
+function encodeP2pSignal(kind, description) {
+  return JSON.stringify({ psystar: 'p2p-signal', kind: kind, payload: description });
+}
+
+function decodeP2pSignal(raw) {
+  try {
+    var parsed = JSON.parse(String(raw).trim());
+
+    if (!parsed || parsed.psystar !== 'p2p-signal') return null;
+    if (parsed.kind !== 'offer' && parsed.kind !== 'answer') return null;
+    if (!parsed.payload || typeof parsed.payload.type !== 'string') return null;
+
+    return parsed;
+  } catch (err) {
+    return null;
+  }
+}
+
+function waitForIceComplete(conn) {
+  return new Promise(function (resolve) {
+    if (conn.iceGatheringState === 'complete') {
+      resolve();
+      return;
+    }
+
+    var settled = false;
+
+    conn.addEventListener('icegatheringstatechange', function () {
+      if (!settled && conn.iceGatheringState === 'complete') {
+        settled = true;
+        resolve();
+      }
+    });
+
+    setTimeout(function () {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    }, 4000);
+  });
+}
+
+function sendP2p(kind, payload) {
+  if (!p2pChannel || p2pChannel.readyState !== 'open') return;
+  if (p2pRole !== 'host') return;
+
+  try {
+    p2pChannel.send(JSON.stringify({
+      kind: kind,
+      deviceId: deviceId,
+      time: Date.now(),
+      payload: payload || {}
+    }));
+  } catch (err) {}
+}
+
+function onP2pChannelMessage(event) {
+  var message = null;
+
+  try {
+    message = JSON.parse(event.data);
+  } catch (err) {
+    return;
+  }
+
+  if (!message || message.deviceId === deviceId) return;
+
+  peers['p2p:' + message.deviceId] = Date.now();
+  updatePeerCount();
+
+  if (p2pRole === 'guest') {
+    applyFollowerMessage(message);
+  }
+}
+
+function setupP2pChannel(channel) {
+  p2pChannel = channel;
+
+  channel.onopen = function () {
+    p2pHostBtn.classList.toggle('active', p2pRole === 'host');
+    p2pJoinBtn.classList.toggle('active', p2pRole === 'guest');
+    statusLine.textContent = p2pRole === 'host'
+      ? 'הגשר נפתח ✦ האורח מחובר — אתם המובילים של העולם הזה'
+      : 'הגשר נפתח ✦ אתם מחברים לעולם אחר ומקשיבים למארח';
+  };
+
+  channel.onmessage = onP2pChannelMessage;
+
+  channel.onclose = function () {
+    p2pChannel = null;
+    p2pHostBtn.classList.remove('active');
+    p2pJoinBtn.classList.remove('active');
+    statusLine.textContent = 'הגשר בין העולמות נסגר';
+  };
+}
+
+p2pHostBtn.addEventListener('click', function () {
+  if (p2pConn) {
+    statusLine.textContent = 'כבר יש גשר פעיל ✦ רעננו את הדף כדי להתחיל מחדש';
+    return;
+  }
+
+  if (typeof RTCPeerConnection === 'undefined') {
+    statusLine.textContent = 'הדפדפן לא תומך ב-WebRTC';
+    return;
+  }
+
+  p2pRole = 'host';
+  p2pConn = new RTCPeerConnection(p2pRtcConfig());
+  setupP2pChannel(p2pConn.createDataChannel('psystar'));
+
+  p2pConn.createOffer().then(function (offer) {
+    return p2pConn.setLocalDescription(offer);
+  }).then(function () {
+    return waitForIceComplete(p2pConn);
+  }).then(function () {
+    p2pSignalOut.value = encodeP2pSignal('offer', p2pConn.localDescription);
+    statusLine.textContent = 'שלב 1 ✦ העתיקו את אות הגשר ושלחו לאורח';
+  }).catch(function () {
+    statusLine.textContent = 'יצירת הגשר נכשלה';
+  });
+});
+
+p2pJoinBtn.addEventListener('click', function () {
+  if (p2pConn) {
+    statusLine.textContent = 'כבר יש גשר פעיל ✦ רעננו את הדף כדי להתחיל מחדש';
+    return;
+  }
+
+  var envelope = decodeP2pSignal(p2pSignalIn.value);
+
+  if (!envelope || envelope.kind !== 'offer') {
+    statusLine.textContent = 'הדביקו הצעת גשר תקינה ממארח ✦ ואז לחצו הצטרפות';
+    return;
+  }
+
+  if (typeof RTCPeerConnection === 'undefined') {
+    statusLine.textContent = 'הדפדפן לא תומך ב-WebRTC';
+    return;
+  }
+
+  p2pRole = 'guest';
+  p2pConn = new RTCPeerConnection(p2pRtcConfig());
+
+  p2pConn.ondatachannel = function (event) {
+    setupP2pChannel(event.channel);
+  };
+
+  p2pConn.setRemoteDescription(envelope.payload).then(function () {
+    return p2pConn.createAnswer();
+  }).then(function (answer) {
+    return p2pConn.setLocalDescription(answer);
+  }).then(function () {
+    return waitForIceComplete(p2pConn);
+  }).then(function () {
+    p2pSignalOut.value = encodeP2pSignal('answer', p2pConn.localDescription);
+    statusLine.textContent = 'שלב 2 ✦ העתיקו את התשובה ושלחו חזרה למארח';
+  }).catch(function () {
+    statusLine.textContent = 'ההצטרפות לגשר נכשלה ✦ בדקו את האות שהודבק';
+  });
+});
+
+p2pAcceptBtn.addEventListener('click', function () {
+  if (!p2pConn || p2pRole !== 'host') {
+    statusLine.textContent = 'רק מארח שיצר גשר יכול לקבל תשובה';
+    return;
+  }
+
+  var envelope = decodeP2pSignal(p2pSignalIn.value);
+
+  if (!envelope || envelope.kind !== 'answer') {
+    statusLine.textContent = 'הדביקו תשובת גשר תקינה מהאורח';
+    return;
+  }
+
+  p2pConn.setRemoteDescription(envelope.payload).then(function () {
+    statusLine.textContent = 'שלב 3 ✦ הגשר מתחבר...';
+  }).catch(function () {
+    statusLine.textContent = 'קבלת התשובה נכשלה ✦ בדקו את האות שהודבק';
+  });
+});
+
+p2pCopyBtn.addEventListener('click', function () {
+  if (!p2pSignalOut.value) {
+    statusLine.textContent = 'אין אות להעתקה עדיין';
+    return;
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(p2pSignalOut.value).then(function () {
+      statusLine.textContent = 'אות הגשר הועתק ✦ שלחו אותו לעולם השני';
+    }).catch(function () {
+      p2pSignalOut.select();
+      statusLine.textContent = 'העתקה אוטומטית נכשלה ✦ סמנו והעתיקו ידנית';
+    });
+  } else {
+    p2pSignalOut.select();
+    statusLine.textContent = 'סמנו את האות והעתיקו ידנית';
+  }
+});
 
 var LIBRARY_KEY = 'psystar.library.v1';
 var MAX_DREAMS = 12;
