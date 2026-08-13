@@ -31,3 +31,22 @@ test('sceneAtBar ends non-looping song', () => {
   expect(sceneAtBar(song, 1)).toBe(2);
   expect(sceneAtBar(song, 2)).toBe(-1);
 });
+
+
+test('sceneAtBar rejects negative bars in non-loop songs', () => {
+  const song = createSong([
+    { sceneIndex: 0, bars: 2 }
+  ], false);
+
+  expect(sceneAtBar(song, -1)).toBe(-1);
+  expect(sceneAtBar(song, -100)).toBe(-1);
+});
+
+test('sceneAtBar wraps negative bars in looping songs', () => {
+  const song = createSong([
+    { sceneIndex: 0, bars: 2 },
+    { sceneIndex: 1, bars: 2 }
+  ], true);
+
+  expect(sceneAtBar(song, -1)).toBe(1);
+});
