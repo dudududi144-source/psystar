@@ -21,6 +21,8 @@ const requiredFiles = [
   'src/engine/voice-manager.ts',
   'src/engine/effects-rack.ts',
   'src/engine/foundation-adapter.ts',
+  'src/engine/midi-driver.ts',
+  'src/engine/recorder.ts',
   'src/integration/foundation-bridge.ts',
   'src/integration/device-registry.ts',
   'src/integration/sync-protocol.ts',
@@ -37,6 +39,8 @@ const requiredFiles = [
   'tests/foundation-bridge.test.ts',
   'tests/device-registry.test.ts',
   'tests/sync-protocol.test.ts',
+  'tests/midi-driver.test.ts',
+  'tests/recorder.test.ts',
   'web/index.html',
   'docs/design.md',
   'docs/integration.md'
