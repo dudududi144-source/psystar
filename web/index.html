@@ -290,7 +290,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 4 · זיכרון פורטל · אלכימיית קצב</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 5 · רשת משפחת PSY · סנכרון רב-מכשירי</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -396,6 +396,22 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  
+  <section class="rack">
+    <span class="rack-title">רשת משפחת PSY · סנכרון רב-מכשירי</span>
+    <div class="dial">
+      <label>מזהה מכשיר</label>
+      <span id="deviceIdLabel" style="color: var(--gold);">—</span>
+    </div>
+    <button id="soloBtn" class="orb ghost active" type="button">סולו</button>
+    <button id="leaderBtn" class="orb" type="button">הפוך למוביל ✦</button>
+    <button id="followerBtn" class="orb" type="button">עקוב אחרי מוביל</button>
+    <div class="dial">
+      <label>מכשירים ברשת</label>
+      <span id="peerCount">1</span>
+    </div>
+  </section>
+
   <section class="euclid-panel">
     <span class="rack-title">אלכימיית קצב · יוצר פעימות אוקלידי</span>
     <div id="euclidRows"></div>
@@ -413,7 +429,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">פריסטים · מורפינג חי · קצבים אוקלידיים · ADSR · ריסוק ופייזר · מצב מסע · שום סוד לא נשמר כאן</p>
+  <p class="hint">פריסטים · מורפינג חי · קצבים אוקלידיים · סנכרון רב-מכשירי · ADSR · ריסוק ופייזר · מצב מסע · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -953,6 +969,7 @@ ROWS.forEach(function (row, rowIndex) {
         refreshCell(rowIndex, stepIndex);
         markActiveScene(-1);
         markActivePreset(-1);
+        broadcastGrid();
       });
 
       cellRefs[rowIndex][stepIndex] = cell;
@@ -1010,6 +1027,7 @@ function setSceneGrid(index) {
 function applyScene(index) {
   setSceneGrid(index);
   markActivePreset(-1);
+  postSync('scene', { index: index });
   statusLine.textContent = 'סצנה נטענה ✦ ' + SCENES[index].name;
 }
 
@@ -1032,6 +1050,7 @@ function randomizeGrid() {
   refreshAllCells();
   markActiveScene(-1);
   markActivePreset(-1);
+  broadcastGrid();
   statusLine.textContent = 'הישות זרקה תבנית חדשה ✦ תאחז חזק';
 }
 
@@ -1044,6 +1063,7 @@ function clearGrid() {
   refreshAllCells();
   markActiveScene(-1);
   markActivePreset(-1);
+  broadcastGrid();
   statusLine.textContent = 'הרשת נוקתה ✦ שקט לפני הסערה';
 }
 
@@ -1166,6 +1186,7 @@ function applyPresetToConsole(preset) {
   setSlider(phaserRange, preset.params.phaser);
   setSlider(delayRange, preset.params.delay);
   setSlider(reverbRange, preset.params.reverb);
+  broadcastGrid();
 }
 
 presetButtons.forEach(function (btn, i) {
@@ -1231,6 +1252,150 @@ morphRange.addEventListener('input', function () {
   markActivePreset(-1);
   statusLine.textContent = 'חולמים בין ' + aPreset.name + ' ל-' + bPreset.name;
 });
+
+var deviceId = (function () {
+  try {
+    var saved = localStorage.getItem('psystar.device.id');
+    if (saved) return saved;
+  } catch (err) {}
+
+  var generated = 'psy-' + Math.random().toString(36).slice(2, 8);
+
+  try {
+    localStorage.setItem('psystar.device.id', generated);
+  } catch (err) {}
+
+  return generated;
+})();
+
+var syncRole = 'solo';
+var syncChannel = null;
+var peers = {};
+var soloBtn = document.getElementById('soloBtn');
+var leaderBtn = document.getElementById('leaderBtn');
+var followerBtn = document.getElementById('followerBtn');
+var peerCountEl = document.getElementById('peerCount');
+var deviceIdLabel = document.getElementById('deviceIdLabel');
+
+deviceIdLabel.textContent = deviceId;
+
+function openSyncChannel() {
+  if (syncChannel) return true;
+
+  if (typeof BroadcastChannel === 'undefined') {
+    statusLine.textContent = 'הדפדפן לא תומך בסנכרון רב-מכשירי';
+    return false;
+  }
+
+  syncChannel = new BroadcastChannel('psystar.sync.v1');
+  syncChannel.onmessage = function (event) {
+    onSyncMessage(event.data);
+  };
+
+  window.setInterval(function () {
+    postPresence();
+  }, 3000);
+
+  window.setInterval(prunePeers, 4000);
+  return true;
+}
+
+function postPresence() {
+  if (!syncChannel || syncRole === 'solo') return;
+  syncChannel.postMessage({ kind: 'presence', deviceId: deviceId, time: Date.now(), payload: {} });
+}
+
+function postSync(kind, payload) {
+  if (!syncChannel || syncRole !== 'leader') return;
+  syncChannel.postMessage({ kind: kind, deviceId: deviceId, time: Date.now(), payload: payload || {} });
+}
+
+function setSyncRole(role) {
+  if (role !== 'solo') {
+    if (!openSyncChannel()) return;
+  }
+
+  syncRole = role;
+  soloBtn.classList.toggle('active', role === 'solo');
+  leaderBtn.classList.toggle('active', role === 'leader');
+  followerBtn.classList.toggle('active', role === 'follower');
+
+  if (role === 'solo') {
+    statusLine.textContent = 'מצב סולו ✦ אתה לבד עם המכונה';
+  } else if (role === 'leader') {
+    postPresence();
+    statusLine.textContent = 'אתה המוביל ✦ כל מכשיר עוקב ינהג לפיך';
+  } else {
+    postPresence();
+    statusLine.textContent = 'מצב עוקב ✦ המכונה מקשיבה למוביל';
+  }
+}
+
+soloBtn.addEventListener('click', function () { setSyncRole('solo'); });
+leaderBtn.addEventListener('click', function () { setSyncRole('leader'); });
+followerBtn.addEventListener('click', function () { setSyncRole('follower'); });
+
+function onSyncMessage(message) {
+  if (!message || message.deviceId === deviceId) return;
+
+  peers[message.deviceId] = Date.now();
+  updatePeerCount();
+
+  if (syncRole !== 'follower') return;
+
+  if (message.kind === 'play') {
+    if (message.payload && typeof message.payload.bpm === 'number') {
+      setSlider(bpmRange, message.payload.bpm);
+    }
+    if (!running) startEngine();
+  } else if (message.kind === 'stop') {
+    if (running) stopEngine();
+  } else if (message.kind === 'bpm') {
+    if (message.payload && typeof message.payload.bpm === 'number') {
+      setSlider(bpmRange, message.payload.bpm);
+    }
+  } else if (message.kind === 'scene') {
+    if (message.payload && typeof message.payload.index === 'number') {
+      var sceneIdx = message.payload.index;
+      if (sceneIdx >= 0 && sceneIdx < SCENES.length) setSceneGrid(sceneIdx);
+    }
+  } else if (message.kind === 'grid') {
+    var rows = message.payload && message.payload.rows;
+    if (Array.isArray(rows) && rows.length === ROWS.length) {
+      gridState = rows.map(function (row) {
+        if (!Array.isArray(row)) return [];
+        return row.map(function (cell) { return cell === true || cell === 1; });
+      });
+      refreshAllCells();
+      markActiveScene(-1);
+      markActivePreset(-1);
+    }
+  }
+}
+
+function prunePeers() {
+  var now = Date.now();
+  var changed = false;
+
+  for (var key in peers) {
+    if (now - peers[key] > 10000) {
+      delete peers[key];
+      changed = true;
+    }
+  }
+
+  if (changed) updatePeerCount();
+}
+
+function updatePeerCount() {
+  var count = 1;
+  for (var key in peers) count++;
+  peerCountEl.textContent = String(count);
+}
+
+function broadcastGrid() {
+  postSync('grid', { rows: gridState });
+}
 
 var euclidWrap = document.getElementById('euclidRows');
 var euclidDefaults = { pulses: [4, 5, 1, 3], rotation: [0, 0, 0, 0] };
@@ -1299,6 +1464,7 @@ ROWS.forEach(function (row, rowIndex) {
     refreshAllCells();
     markActiveScene(-1);
     markActivePreset(-1);
+    broadcastGrid();
     statusLine.textContent = 'פעימות אוקלידיות נארגו עבור ' + ROWS[rowIndex].name;
   });
 
@@ -1325,6 +1491,7 @@ document.getElementById('euclidRollBtn').addEventListener('click', function () {
   refreshAllCells();
   markActiveScene(-1);
   markActivePreset(-1);
+  broadcastGrid();
   statusLine.textContent = 'הגורל האוקלידי נגלגל ✦ ארבעה קצבים חדשים נארגו יחד';
 });
 
@@ -1360,12 +1527,14 @@ function triggerStepVoices(stepIndex, when) {
 
 function advanceSongIfNeeded() {
   if (!songMode) return;
+  if (syncRole === 'follower') return;
 
   stepsPlayed++;
 
   if (stepsPlayed % STEPS_PER_SCENE === 0) {
     songSceneIndex = (songSceneIndex + 1) % SCENES.length;
     setSceneGrid(songSceneIndex);
+    postSync('scene', { index: songSceneIndex });
     statusLine.textContent = 'המסע מתקדם ✦ ' + SCENES[songSceneIndex].name;
   }
 }
@@ -1411,6 +1580,7 @@ function startEngine() {
 
   timerId = setInterval(scheduleLoop, lookaheadMs);
   playBtn.classList.add('active');
+  postSync('play', { bpm: bpm });
   statusLine.textContent = 'המסע החל ✦ תזמון lookahead חי בקצב ' + bpm + ' BPM';
 }
 
@@ -1421,6 +1591,7 @@ function stopEngine() {
   visualQueue = [];
   playBtn.classList.remove('active');
   clearLights();
+  postSync('stop', {});
   statusLine.textContent = 'המכונה נחה ✦ הקיילודוסקוב עדיין זוכר אותך.';
 }
 
@@ -1445,6 +1616,7 @@ window.addEventListener('keydown', function (e) {
 bpmRange.addEventListener('input', function () {
   bpm = Number(bpmRange.value);
   bpmValue.textContent = bpmRange.value;
+  postSync('bpm', { bpm: Number(bpmRange.value) });
 });
 
 swingRange.addEventListener('input', function () {
