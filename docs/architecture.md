@@ -6,7 +6,8 @@
 2. **Domain** — המודל המוזיקלי: pattern, transport, device, scene, song, euclidean, preset.
 3. **Protocol** — השפה: הודעות מובנות וקידוד בטוח.
 4. **Engine** — הלב: scheduler, lookahead-scheduler, envelope, voice-manager, effects-rack, audio-driver, foundation-adapter.
-5. **UI** — המסע: state reducer, render, וקונסולת DMT חיה ב-web.
+5. **Integration** — הגשר אל משפחת PSY: foundation-bridge, device-registry, sync-protocol.
+6. **UI** — המסע: state reducer, render, וקונסולת DMT חיה ב-web.
 
 ## זרימת נתונים
 
@@ -23,6 +24,10 @@ Preset לוכד את כל מצב המכונה — גריד + פרמטרים. mor
 ## יצירת קצב (Euclidean)
 
 euclidean(pulses, steps, rotation) מחלק פעימות באופן שווה ככל האפשר — הקצב הפסיכדלי הקלאסי. כל ערוץ בקונסולה מקבל יוצר אוקלידי עצמאי עם סיבוב, כך שניתן לארוג פוליריתמיה שלמה בלחיצה.
+
+## זרימת רשת (Multi-Device Sync)
+
+SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפקידי solo/leader/follower. הקונסולה מממשת זאת מעל BroadcastChannel: מוביל משדר כל שינוי, עוקבים מחילים, presence שומר על מניית מכשירים חיה. FoundationBridge מחבר את כל זה החוצה אל psy-foundation דרך port יחיד ומבודד.
 
 ## גבולות אחריות
 
@@ -42,13 +47,17 @@ euclidean(pulses, steps, rotation) מחלק פעימות באופן שווה כ�
 - engine/envelope: ADSR — מתן ערך לפי זמן ושער.
 - engine/voice-manager: הקצאת קולות, steal של הזנב, מניעת הצפה.
 - engine/effects-rack: תיאור אפקטים חסין-שינוי, סינון פעילים.
-- engine/foundation-adapter: גשר אל psy-foundation, הלוך ושוב.
+- engine/foundation-adapter: המרה נקודתית של אירועים, הלוך ושוב.
+- integration/foundation-bridge: צינור חי בין bus לעולם, עם מונים.
+- integration/device-registry: גילוי, heartbeat, prune.
+- integration/sync-protocol: הודעות, תפקידים, בחירת מוביל.
 - ui/state: reducer טהור, בלי side effects.
 
 ## הרחבות עתידיות
 
+- חיבור ישיר ל-psy-foundation עם transport קנוני
 - MIDI driver אמיתי
-- WebSocket bridge בין מכשירים
+- WebSocket bridge בין מכשירים רחוקים
 - Visualizer ספקטרלי מלא
 - עורך תבניות גרפי
-- persistence וסצנות
+- הקלטת מסע וייצוא
