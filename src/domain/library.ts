@@ -1,4 +1,4 @@
-export type LibraryItemKind = 'scene' | 'journey';
+export type LibraryItemKind = 'scene' | 'journey' | 'song';
 
 export interface LibraryItem {
   name: string;
@@ -20,7 +20,7 @@ export function createLibrary(): Library {
 export function isValidItem(item: LibraryItem): boolean {
   if (!item) return false;
   if (typeof item.name !== 'string' || item.name.length === 0) return false;
-  if (item.kind !== 'scene' && item.kind !== 'journey') return false;
+  if (item.kind !== 'scene' && item.kind !== 'journey' && item.kind !== 'song') return false;
   if (typeof item.createdAt !== 'number') return false;
   if (typeof item.payload !== 'string') return false;
 
