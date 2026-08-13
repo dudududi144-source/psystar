@@ -49,6 +49,12 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - כניסת MIDI — מקלדת חיצונית מנגנת על מנוע הסינתזה של PSYSTAR, מיפוי טווחים לקולות ✔
 - מודולים טהורים ונבדקים: tap-tempo, History, midi-input-map ✔
 
+## שלב 11 · הגשר בין העולמות — הושלם ✔
+- p2p-signaling — מעטפות אות עם marker ייעודי וולידציה מלאה ✔
+- WebRTC Data Channel עם איתות ידני (העתק/הדבק), non-trickle ICE, STUN ציבורי ✔
+- מארח = מוביל: משדר play/stop/bpm/scene/grid לעולם האורח בזמן אמת ✔
+- refactor של applyFollowerMessage — ערוץ אחד משותף לרשת מקומית ולגשר P2P ✔
+
 ## אופק · מה הלאה
 - חיבור ישיר ל-psy-foundation ברגע ש-transport יתקנן
 - MIDI driver אמיתי
