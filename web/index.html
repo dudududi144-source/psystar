@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="color-scheme" content="dark"/>
-<title>PSYSTAR ✦ מכונת התודעה</title>
+<title>PSYSTAR ✦ מכונת התודעה · שלב 2</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/heebo@5.0.12/index.css"/>
 <style>
 :root {
@@ -86,36 +86,44 @@ body.dmt .mandala-spinner img {
   text-align: center;
   color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.3em;
-  margin: 6px 0 26px;
+  margin: 6px 0 24px;
   font-size: 0.85rem;
 }
 
-.transport {
-  display: flex; flex-wrap: wrap; gap: 14px;
+.transport, .scenes {
+  display: flex; flex-wrap: wrap; gap: 12px;
   align-items: center; justify-content: center;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
 }
 
-.orb {
+.orb, .scene-btn {
   border: 1px solid rgba(0, 240, 255, 0.5);
-  background: radial-gradient(circle at 30% 30%, rgba(0, 240, 255, 0.25), rgba(123, 47, 247, 0.25));
+  background: radial-gradient(circle at 30% 30%, rgba(0, 240, 255, 0.22), rgba(123, 47, 247, 0.22));
   color: #fff;
-  padding: 12px 26px;
+  padding: 11px 22px;
   border-radius: 999px;
   font-family: inherit;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.3s ease;
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.22);
 }
 
-.orb:hover { transform: scale(1.06); }
-.orb:active { transform: scale(0.94); }
+.scene-btn { padding: 8px 16px; font-size: 0.85rem; }
+
+.orb:hover, .scene-btn:hover { transform: scale(1.06); }
+.orb:active, .scene-btn:active { transform: scale(0.94); }
 
 .orb.active {
   box-shadow: 0 0 34px var(--magenta), 0 0 60px rgba(255, 43, 214, 0.4);
   border-color: var(--magenta);
+}
+
+.scene-btn.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px rgba(255, 209, 102, 0.5);
+  color: var(--gold);
 }
 
 .orb.gold {
@@ -123,17 +131,23 @@ body.dmt .mandala-spinner img {
   box-shadow: 0 0 18px rgba(255, 209, 102, 0.3);
 }
 
+.orb.ghost {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .dial {
   display: flex; align-items: center; gap: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 16px;
+  padding: 9px 15px;
   border-radius: 18px;
 }
 
-.dial label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); letter-spacing: 0.12em; }
-.dial input[type=range] { accent-color: var(--magenta); width: 140px; }
-.dial span { min-width: 34px; text-align: center; font-weight: 800; color: var(--cyan); }
+.dial label { font-size: 0.78rem; color: rgba(255, 255, 255, 0.7); letter-spacing: 0.1em; }
+.dial input[type=range] { accent-color: var(--magenta); width: 120px; }
+.dial span { min-width: 38px; text-align: center; font-weight: 800; color: var(--cyan); font-size: 0.85rem; }
 
 .seq-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; direction: ltr; }
 
@@ -188,6 +202,13 @@ body.dmt .mandala-spinner img {
   margin-top: 8px;
   letter-spacing: 0.1em;
 }
+
+.scenes-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.2em;
+  margin-left: 6px;
+}
 </style>
 </head>
 <body>
@@ -201,16 +222,22 @@ body.dmt .mandala-spinner img {
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ מסע DMT אינטראקטיבי</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 2 · מנוע זמן אמיתי · סצנות · הדהוד תהום</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
-    <button id="stopBtn" class="orb" type="button">■ עצירה</button>
+    <button id="stopBtn" class="orb ghost" type="button">■ עצירה</button>
 
     <div class="dial">
       <label for="bpmRange">פעימה</label>
       <input id="bpmRange" type="range" min="60" max="180" value="122"/>
       <span id="bpmValue">122</span>
+    </div>
+
+    <div class="dial">
+      <label for="swingRange">סווינג</label>
+      <input id="swingRange" type="range" min="0" max="60" value="0"/>
+      <span id="swingValue">0%</span>
     </div>
 
     <div class="dial">
@@ -222,6 +249,17 @@ body.dmt .mandala-spinner img {
     <button id="dmtBtn" class="orb gold" type="button">מצב DMT</button>
   </section>
 
+  <section class="scenes">
+    <span class="scenes-label">סצנות</span>
+    <button id="sceneBtn0" class="scene-btn" type="button">שער ראשית</button>
+    <button id="sceneBtn1" class="scene-btn" type="button">נהר מגנטה</button>
+    <button id="sceneBtn2" class="scene-btn" type="button">ספירלת ציאן</button>
+    <button id="sceneBtn3" class="scene-btn" type="button">לב התהום</button>
+    <button id="randomBtn" class="orb gold" type="button">זריקת ישות ✦</button>
+    <button id="saveBtn" class="orb ghost" type="button">שמירת סצנה</button>
+    <button id="clearBtn" class="orb ghost" type="button">ניקוי</button>
+  </section>
+
   <section id="stepGrid"></section>
 
   <div class="lights">
@@ -229,8 +267,8 @@ body.dmt .mandala-spinner img {
     <div id="lightTrack" class="track"></div>
   </div>
 
-  <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער.</p>
-  <p class="hint">כל ויזואל מגיב למוזיקה · כל צעד ניתן לעריכה · שום סוד לא נשמר כאן</p>
+  <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
+  <p class="hint">תזמון lookahead · סווינג · הדהוד ופילטר נושם · ויזואל מגיב לסאונד · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -243,23 +281,47 @@ var ROWS = [
 
 var STEPS = 16;
 
-var gridState = ROWS.map(function () {
-  var arr = [];
-  for (var i = 0; i < STEPS; i++) arr.push(false);
-  return arr;
-});
+var SCENES = [
+  {
+    name: 'שער ראשית',
+    rows: [
+      [1,0,0,1,0,0,1,0,1,0,1,0,1,0,0,0],
+      [0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0],
+      [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+      [0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1]
+    ]
+  },
+  {
+    name: 'נהר מגנטה',
+    rows: [
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+      [0,1,0,0,1,0,0,1,0,1,0,0,1,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]
+    ]
+  },
+  {
+    name: 'ספירלת ציאן',
+    rows: [
+      [1,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0],
+      [0,0,1,0,0,1,0,0,0,1,0,0,1,0,1,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1]
+    ]
+  },
+  {
+    name: 'לב התהום',
+    rows: [
+      [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0],
+      [0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0]
+    ]
+  }
+];
 
-var seed = {
-  bass:  [0, 3, 6, 8, 10, 12],
-  lead:  [2, 7, 10, 14],
-  pad:   [0, 8],
-  spark: [4, 11, 15]
-};
-
-ROWS.forEach(function (row, rowIndex) {
-  seed[row.id].forEach(function (stepIndex) {
-    gridState[rowIndex][stepIndex] = true;
-  });
+var gridState = SCENES[0].rows.map(function (row) {
+  return row.map(function (bit) { return bit === 1; });
 });
 
 var bassScale = [0, 0, 3, 0, 5, 3, 0, 7];
@@ -272,71 +334,143 @@ function midiToFreq(midi) {
 var audioCtx = null;
 var masterGain = null;
 var delayNode = null;
+var delaySend = null;
+var reverbNode = null;
+var reverbSend = null;
+var filterNode = null;
+var lfoOsc = null;
+var lfoGain = null;
+var analyser = null;
+var freqData = null;
+var bassEnergy = 0;
+
+function buildImpulse(ctx, seconds, decay) {
+  var rate = ctx.sampleRate;
+  var length = Math.floor(rate * seconds);
+  var impulse = ctx.createBuffer(2, length, rate);
+
+  for (var ch = 0; ch < 2; ch++) {
+    var channelData = impulse.getChannelData(ch);
+    for (var i = 0; i < length; i++) {
+      channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+
+  return impulse;
+}
+
+function applyFilterMood() {
+  if (!filterNode || !lfoOsc || !lfoGain) return;
+
+  if (dmtMode) {
+    filterNode.frequency.value = 1400;
+    lfoOsc.frequency.value = 0.18;
+    lfoGain.gain.value = 950;
+  } else {
+    filterNode.frequency.value = 1100;
+    lfoOsc.frequency.value = 0.06;
+    lfoGain.gain.value = 450;
+  }
+}
 
 function initAudio() {
   if (audioCtx) return;
 
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'lowpass';
+  filterNode.frequency.value = 1100;
+  filterNode.Q.value = 3;
+
   masterGain = audioCtx.createGain();
   masterGain.gain.value = 0.8;
-  masterGain.connect(audioCtx.destination);
+
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+
+  filterNode.connect(masterGain);
+  masterGain.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  lfoOsc = audioCtx.createOscillator();
+  lfoOsc.type = 'sine';
+  lfoOsc.frequency.value = 0.06;
+  lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 450;
+  lfoOsc.connect(lfoGain);
+  lfoGain.connect(filterNode.frequency);
+  lfoOsc.start();
 
   delayNode = audioCtx.createDelay(1.0);
   delayNode.delayTime.value = 0.34;
+  delaySend = audioCtx.createGain();
+  delaySend.gain.value = 0.5;
 
   var feedback = audioCtx.createGain();
   feedback.gain.value = 0.42;
-
   var delayFilter = audioCtx.createBiquadFilter();
   delayFilter.type = 'lowpass';
   delayFilter.frequency.value = 2200;
 
+  delaySend.connect(delayNode);
   delayNode.connect(delayFilter);
   delayFilter.connect(feedback);
   feedback.connect(delayNode);
-  delayNode.connect(masterGain);
+  delayFilter.connect(filterNode);
+
+  reverbNode = audioCtx.createConvolver();
+  reverbNode.buffer = buildImpulse(audioCtx, 2.6, 2.2);
+  reverbSend = audioCtx.createGain();
+  reverbSend.gain.value = 0.28;
+  reverbSend.connect(reverbNode);
+  reverbNode.connect(filterNode);
+
+  applyFilterMood();
 }
 
-function voiceBass(stepIndex) {
+function voiceBass(stepIndex, when) {
   var semis = bassScale[stepIndex % bassScale.length];
   var osc = audioCtx.createOscillator();
   osc.type = 'sawtooth';
   osc.frequency.value = midiToFreq(45 + semis);
 
-  var filter = audioCtx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(900, audioCtx.currentTime);
-  filter.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.22);
+  var vfilter = audioCtx.createBiquadFilter();
+  vfilter.type = 'lowpass';
+  vfilter.frequency.setValueAtTime(900, when);
+  vfilter.frequency.exponentialRampToValueAtTime(120, when + 0.22);
 
   var gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
+  gain.gain.setValueAtTime(0.5, when);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.28);
 
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(masterGain);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.3);
+  osc.connect(vfilter);
+  vfilter.connect(gain);
+  gain.connect(filterNode);
+  osc.start(when);
+  osc.stop(when + 0.3);
 }
 
-function voiceLead(stepIndex) {
+function voiceLead(stepIndex, when) {
   var semis = leadPenta[(stepIndex * 3) % leadPenta.length];
   var osc = audioCtx.createOscillator();
   osc.type = 'square';
   osc.frequency.value = midiToFreq(69 + semis);
 
   var gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.34);
+  gain.gain.setValueAtTime(0.16, when);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.34);
 
   osc.connect(gain);
-  gain.connect(masterGain);
-  gain.connect(delayNode);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.36);
+  gain.connect(filterNode);
+  gain.connect(delaySend);
+  gain.connect(reverbSend);
+  osc.start(when);
+  osc.stop(when + 0.36);
 }
 
-function voicePad(stepIndex) {
+function voicePad(stepIndex, when) {
   var semis = [0, 5][stepIndex % 2];
   var oscA = audioCtx.createOscillator();
   var oscB = audioCtx.createOscillator();
@@ -345,63 +479,74 @@ function voicePad(stepIndex) {
   oscA.frequency.value = midiToFreq(57 + semis);
   oscB.frequency.value = midiToFreq(57 + semis) * 1.005;
 
-  var filter = audioCtx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 750;
+  var vfilter = audioCtx.createBiquadFilter();
+  vfilter.type = 'lowpass';
+  vfilter.frequency.value = 750;
 
   var gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.3);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4);
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.12, when + 0.3);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 1.4);
 
-  oscA.connect(filter);
-  oscB.connect(filter);
-  filter.connect(gain);
-  gain.connect(masterGain);
-  oscA.start();
-  oscB.start();
-  oscA.stop(audioCtx.currentTime + 1.5);
-  oscB.stop(audioCtx.currentTime + 1.5);
+  oscA.connect(vfilter);
+  oscB.connect(vfilter);
+  vfilter.connect(gain);
+  gain.connect(filterNode);
+  gain.connect(reverbSend);
+  oscA.start(when);
+  oscB.start(when);
+  oscA.stop(when + 1.5);
+  oscB.stop(when + 1.5);
 }
 
-function voiceSpark(stepIndex) {
+function voiceSpark(stepIndex, when) {
   var semis = leadPenta[(stepIndex * 7) % leadPenta.length];
   var osc = audioCtx.createOscillator();
   osc.type = 'sine';
   osc.frequency.value = midiToFreq(93 + semis);
 
   var gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  gain.gain.setValueAtTime(0.2, when);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.6);
 
   osc.connect(gain);
-  gain.connect(masterGain);
-  gain.connect(delayNode);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.65);
+  gain.connect(filterNode);
+  gain.connect(delaySend);
+  gain.connect(reverbSend);
+  osc.start(when);
+  osc.stop(when + 0.65);
 }
 
 var running = false;
-var currentStep = -1;
-var timerId = null;
 var bpm = 122;
+var swingPercent = 0;
 var intensity = 6;
 var dmtMode = false;
 var energy = 0;
+
+var nextStep = 0;
+var nextStepTime = 0;
+var timerId = null;
+var lookaheadMs = 25;
+var scheduleAheadSec = 0.12;
+var visualQueue = [];
+var currentStep = -1;
 
 var playBtn = document.getElementById('playBtn');
 var stopBtn = document.getElementById('stopBtn');
 var dmtBtn = document.getElementById('dmtBtn');
 var bpmRange = document.getElementById('bpmRange');
 var bpmValue = document.getElementById('bpmValue');
+var swingRange = document.getElementById('swingRange');
+var swingValue = document.getElementById('swingValue');
 var intensityRange = document.getElementById('intensityRange');
 var intensityValue = document.getElementById('intensityValue');
 var statusLine = document.getElementById('statusLine');
 var gridEl = document.getElementById('stepGrid');
 var lightTrack = document.getElementById('lightTrack');
 
-function stepMs() {
-  return (60 / bpm) / 4 * 1000;
+function secondsPerStep() {
+  return 60 / bpm / 4;
 }
 
 var lightCells = [];
@@ -427,6 +572,8 @@ function clearLights() {
   });
 }
 
+var cellRefs = [];
+
 ROWS.forEach(function (row, rowIndex) {
   var rowEl = document.createElement('div');
   rowEl.className = 'seq-row';
@@ -439,6 +586,7 @@ ROWS.forEach(function (row, rowIndex) {
 
   var cells = document.createElement('div');
   cells.className = 'cells';
+  cellRefs[rowIndex] = [];
 
   for (var s = 0; s < STEPS; s++) {
     (function (stepIndex) {
@@ -448,25 +596,17 @@ ROWS.forEach(function (row, rowIndex) {
       if (stepIndex % 4 === 0) cell.classList.add('beat4');
 
       if (gridState[rowIndex][stepIndex]) {
-        cell.classList.add('on');
         cell.style.background = row.color;
         cell.style.boxShadow = '0 0 14px ' + row.color;
       }
 
       cell.addEventListener('click', function () {
         gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
-        var active = gridState[rowIndex][stepIndex];
-        cell.classList.toggle('on', active);
-
-        if (active) {
-          cell.style.background = row.color;
-          cell.style.boxShadow = '0 0 14px ' + row.color;
-        } else {
-          cell.style.background = '';
-          cell.style.boxShadow = '';
-        }
+        refreshCell(rowIndex, stepIndex);
+        markActiveScene(-1);
       });
 
+      cellRefs[rowIndex][stepIndex] = cell;
       cells.appendChild(cell);
     })(s);
   }
@@ -475,20 +615,152 @@ ROWS.forEach(function (row, rowIndex) {
   gridEl.appendChild(rowEl);
 });
 
-function tick() {
-  currentStep = (currentStep + 1) % STEPS;
-  paintLights();
+function refreshCell(rowIndex, stepIndex) {
+  var cell = cellRefs[rowIndex][stepIndex];
+  var active = gridState[rowIndex][stepIndex];
 
-  ROWS.forEach(function (row, rowIndex) {
-    if (!gridState[rowIndex][currentStep]) return;
+  if (active) {
+    cell.style.background = ROWS[rowIndex].color;
+    cell.style.boxShadow = '0 0 14px ' + ROWS[rowIndex].color;
+  } else {
+    cell.style.background = '';
+    cell.style.boxShadow = '';
+  }
+}
 
-    if (row.id === 'bass') voiceBass(currentStep);
-    if (row.id === 'lead') voiceLead(currentStep);
-    if (row.id === 'pad') voicePad(currentStep);
-    if (row.id === 'spark') voiceSpark(currentStep);
+function refreshAllCells() {
+  for (var r = 0; r < ROWS.length; r++) {
+    for (var s = 0; s < STEPS; s++) {
+      refreshCell(r, s);
+    }
+  }
+}
 
-    energy = Math.min(1.5, energy + 0.25 + intensity * 0.04);
+var sceneButtons = [
+  document.getElementById('sceneBtn0'),
+  document.getElementById('sceneBtn1'),
+  document.getElementById('sceneBtn2'),
+  document.getElementById('sceneBtn3')
+];
+
+function markActiveScene(index) {
+  sceneButtons.forEach(function (btn, i) {
+    btn.classList.toggle('active', i === index);
   });
+}
+
+function applyScene(index) {
+  var scene = SCENES[index];
+  gridState = scene.rows.map(function (row) {
+    return row.map(function (bit) { return bit === 1; });
+  });
+  refreshAllCells();
+  markActiveScene(index);
+  statusLine.textContent = 'סצנה נטענה ✦ ' + scene.name;
+}
+
+sceneButtons.forEach(function (btn, i) {
+  btn.addEventListener('click', function () {
+    applyScene(i);
+  });
+});
+
+function randomizeGrid() {
+  var densities = [0.34, 0.3, 0.12, 0.2];
+
+  for (var r = 0; r < ROWS.length; r++) {
+    for (var s = 0; s < STEPS; s++) {
+      gridState[r][s] = Math.random() < densities[r];
+    }
+  }
+
+  gridState[0][0] = true;
+  refreshAllCells();
+  markActiveScene(-1);
+  statusLine.textContent = 'הישות זרקה תבנית חדשה ✦ תאחז חזק';
+}
+
+function clearGrid() {
+  for (var r = 0; r < ROWS.length; r++) {
+    for (var s = 0; s < STEPS; s++) {
+      gridState[r][s] = false;
+    }
+  }
+  refreshAllCells();
+  markActiveScene(-1);
+  statusLine.textContent = 'הרשת נוקתה ✦ שקט לפני הסערה';
+}
+
+function saveSceneToLocal() {
+  try {
+    localStorage.setItem('psystar.grid.v2', JSON.stringify(gridState));
+    statusLine.textContent = 'הסצנה נשמרה בזיכרון המקומי ✦ היא תחכה לך כאן';
+  } catch (err) {
+    statusLine.textContent = 'לא ניתן לשמור בזיכרון המקומי.';
+  }
+}
+
+function loadSceneFromLocal() {
+  try {
+    var raw = localStorage.getItem('psystar.grid.v2');
+    if (!raw) return;
+
+    var parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length !== ROWS.length) return;
+
+    for (var r = 0; r < ROWS.length; r++) {
+      if (!Array.isArray(parsed[r]) || parsed[r].length !== STEPS) return;
+      for (var s = 0; s < STEPS; s++) {
+        gridState[r][s] = parsed[r][s] === true;
+      }
+    }
+
+    refreshAllCells();
+    markActiveScene(-1);
+    statusLine.textContent = 'סצנה שמורה שוחזרה ✦ ברוכים השבים';
+  } catch (err) {
+    return;
+  }
+}
+
+document.getElementById('randomBtn').addEventListener('click', randomizeGrid);
+document.getElementById('clearBtn').addEventListener('click', clearGrid);
+document.getElementById('saveBtn').addEventListener('click', saveSceneToLocal);
+
+function triggerStepVoices(stepIndex, when) {
+  var anyActive = false;
+
+  for (var r = 0; r < ROWS.length; r++) {
+    if (!gridState[r][stepIndex]) continue;
+    anyActive = true;
+
+    if (ROWS[r].id === 'bass') voiceBass(stepIndex, when);
+    if (ROWS[r].id === 'lead') voiceLead(stepIndex, when);
+    if (ROWS[r].id === 'pad') voicePad(stepIndex, when);
+    if (ROWS[r].id === 'spark') voiceSpark(stepIndex, when);
+  }
+
+  return anyActive;
+}
+
+function scheduleLoop() {
+  if (!running || !audioCtx) return;
+
+  var horizon = audioCtx.currentTime + scheduleAheadSec;
+
+  while (nextStepTime < horizon) {
+    var swingOffset = 0;
+    if (nextStep % 2 === 1) {
+      swingOffset = (swingPercent / 100) * secondsPerStep() * 0.5;
+    }
+
+    var playTime = nextStepTime + swingOffset;
+    var anyActive = triggerStepVoices(nextStep, playTime);
+    visualQueue.push({ step: nextStep, time: playTime, active: anyActive });
+
+    nextStep = (nextStep + 1) % STEPS;
+    nextStepTime += secondsPerStep();
+  }
 }
 
 function startEngine() {
@@ -498,44 +770,68 @@ function startEngine() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
   running = true;
+  nextStep = 0;
+  nextStepTime = audioCtx.currentTime + 0.06;
+  visualQueue = [];
   currentStep = -1;
-  timerId = setInterval(tick, stepMs());
+  timerId = setInterval(scheduleLoop, lookaheadMs);
   playBtn.classList.add('active');
-  statusLine.textContent = 'המסע החל ✦ המכונה נושמת בקצב ' + bpm + ' BPM';
+  statusLine.textContent = 'המסע החל ✦ תזמון lookahead חי בקצב ' + bpm + ' BPM';
 }
 
 function stopEngine() {
   running = false;
   if (timerId) clearInterval(timerId);
   timerId = null;
+  visualQueue = [];
   playBtn.classList.remove('active');
   clearLights();
   statusLine.textContent = 'המכונה נחה ✦ הקיילודוסקוב עדיין זוכר אותך.';
 }
 
+function toggleEngine() {
+  if (running) stopEngine();
+  else startEngine();
+}
+
 playBtn.addEventListener('click', startEngine);
 stopBtn.addEventListener('click', stopEngine);
+
+window.addEventListener('keydown', function (e) {
+  if (e.code !== 'Space' || e.repeat) return;
+
+  var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea') return;
+
+  e.preventDefault();
+  toggleEngine();
+});
 
 bpmRange.addEventListener('input', function () {
   bpm = Number(bpmRange.value);
   bpmValue.textContent = bpmRange.value;
+});
 
-  if (running) {
-    clearInterval(timerId);
-    timerId = setInterval(tick, stepMs());
-  }
+swingRange.addEventListener('input', function () {
+  swingPercent = Number(swingRange.value);
+  swingValue.textContent = swingRange.value + '%';
 });
 
 intensityRange.addEventListener('input', function () {
   intensity = Number(intensityRange.value);
   intensityValue.textContent = intensityRange.value;
   document.documentElement.style.setProperty('--intensity', String(intensity / 10));
+
+  if (reverbSend) {
+    reverbSend.gain.value = 0.16 + intensity * 0.03;
+  }
 });
 
 dmtBtn.addEventListener('click', function () {
   dmtMode = !dmtMode;
   document.body.classList.toggle('dmt', dmtMode);
   dmtBtn.classList.toggle('active', dmtMode);
+  applyFilterMood();
   statusLine.textContent = dmtMode
     ? 'מצב DMT פעיל ✦ השער נפתח למלואו'
     : 'מצב DMT כבוי ✦ עדיין פסיכודלי, רק מנומס יותר';
@@ -563,7 +859,39 @@ for (var p = 0; p < 90; p++) {
   });
 }
 
+function sampleBassEnergy() {
+  if (!analyser || !running) {
+    bassEnergy *= 0.95;
+    return;
+  }
+
+  analyser.getByteFrequencyData(freqData);
+  var sum = 0;
+  for (var i = 1; i <= 8; i++) sum += freqData[i];
+  var instant = sum / (8 * 255);
+  bassEnergy = bassEnergy * 0.85 + instant * 0.15;
+}
+
+function consumeVisualQueue() {
+  if (!audioCtx || !running) return;
+
+  var nowAudio = audioCtx.currentTime;
+
+  while (visualQueue.length && visualQueue[0].time <= nowAudio) {
+    var evt = visualQueue.shift();
+    currentStep = evt.step;
+    paintLights();
+
+    if (evt.active) {
+      energy = Math.min(1.5, energy + 0.2 + intensity * 0.035 + bassEnergy * 0.5);
+    }
+  }
+}
+
 function drawCosmos(time) {
+  sampleBassEnergy();
+  consumeVisualQueue();
+
   var w = cosmosCanvas.width;
   var h = cosmosCanvas.height;
 
@@ -574,8 +902,9 @@ function drawCosmos(time) {
   var cy = h / 2;
   var segments = dmtMode ? 12 : 8;
   var baseRadius = Math.min(w, h) * 0.32;
+  var drive = energy + bassEnergy * 1.2;
 
-  hueShift += (dmtMode ? 1.6 : 0.6) + energy * 2;
+  hueShift += (dmtMode ? 1.6 : 0.6) + drive * 2;
 
   cosmosCtx.save();
   cosmosCtx.translate(cx, cy);
@@ -586,10 +915,10 @@ function drawCosmos(time) {
 
     var hue = (hueShift + sIndex * (360 / segments)) % 360;
     var wave = Math.sin(time * 0.0012 + sIndex) * 18;
-    var radius = baseRadius * (0.55 + 0.25 * Math.sin(time * 0.0007 + sIndex * 0.8)) + wave + energy * 60;
+    var radius = baseRadius * (0.55 + 0.25 * Math.sin(time * 0.0007 + sIndex * 0.8)) + wave + drive * 55;
 
     cosmosCtx.strokeStyle = 'hsla(' + hue + ', 100%, 62%, 0.5)';
-    cosmosCtx.lineWidth = 1.6 + energy * 2;
+    cosmosCtx.lineWidth = 1.6 + drive * 2.2;
     cosmosCtx.beginPath();
     cosmosCtx.arc(0, 0, Math.max(20, radius), sIndex * 0.4, sIndex * 0.4 + Math.PI * 0.9);
     cosmosCtx.stroke();
@@ -598,7 +927,7 @@ function drawCosmos(time) {
   cosmosCtx.restore();
 
   particles.forEach(function (pt) {
-    pt.radius += pt.speed * (0.6 + energy) * (dmtMode ? 2 : 1);
+    pt.radius += pt.speed * (0.6 + drive) * (dmtMode ? 2 : 1);
     if (pt.radius > 0.75) pt.radius = 0.08;
 
     var px = cx + Math.cos(pt.angle + time * 0.00012) * pt.radius * Math.min(w, h);
@@ -607,7 +936,7 @@ function drawCosmos(time) {
 
     cosmosCtx.fillStyle = 'hsla(' + pHue + ', 100%, 70%, ' + Math.min(1, 0.25 + pt.radius) + ')';
     cosmosCtx.beginPath();
-    cosmosCtx.arc(px, py, pt.size + energy * 2, 0, Math.PI * 2);
+    cosmosCtx.arc(px, py, pt.size + drive * 2, 0, Math.PI * 2);
     cosmosCtx.fill();
   });
 
@@ -619,6 +948,7 @@ function animationLoop(time) {
   requestAnimationFrame(animationLoop);
 }
 
+loadSceneFromLocal();
 requestAnimationFrame(animationLoop);
 </script>
 </body>
