@@ -29,7 +29,7 @@ export function sceneAtBar(song: Song, bar: number): number {
   var b = bar;
   if (song.loop) {
     b = ((bar % total) + total) % total;
-  } else if (bar >= total) {
+  } else if (bar < 0 || bar >= total) {
     return -1;
   }
 
