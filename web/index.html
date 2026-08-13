@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 18 · עומק דינמי · מדרגות עוצמה לכל צעד</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 19 · מגילת התווים · פיאנו-רול חי</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -580,6 +580,15 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  <section class="rack" style="flex-direction: column; align-items: stretch;">
+    <span class="rack-title">מגילת התווים · פיאנו-רול לערוץ הליד</span>
+    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center;">
+      <button id="rollClearBtn" class="orb ghost" type="button">ניקוי מגילה</button>
+      <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">לחיצה מציבה תו · לחיצה שוב מסירה · הסולם נקבע בבורר ההרמוניה</span>
+    </div>
+    <div id="rollPanel" style="display: flex; flex-direction: column; gap: 3px; direction: ltr; margin-top: 8px;"></div>
+  </section>
+
   <section class="rack">
     <span class="rack-title">שפת ההרמוניה · סולם ומשטח אקורדים</span>
     <div class="dial">
@@ -606,7 +615,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">קליק ימני = מדרגת עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מגילת תווים לליד · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -963,10 +972,18 @@ function voiceBass(stepIndex, when) {
 function voiceLead(stepIndex, when) {
   if (!claimVoice()) return;
 
-  var semis = leadPenta[(stepIndex * 3) % leadPenta.length];
+  var rollDegree = leadRoll[stepIndex];
+  var leadBaseNote;
+
+  if (rollDegree >= 0 && HARMONY_SCALES[harmonyScaleType][rollDegree] !== undefined) {
+    leadBaseNote = harmonyKey + HARMONY_SCALES[harmonyScaleType][rollDegree];
+  } else {
+    leadBaseNote = 69 + leadPenta[(stepIndex * 3) % leadPenta.length];
+  }
+
   var osc = audioCtx.createOscillator();
   osc.type = 'square';
-  osc.frequency.value = midiToFreq(69 + semis);
+  osc.frequency.value = midiToFreq(leadBaseNote);
 
   var gain = audioCtx.createGain();
   var atk = Math.max(0.003, attackTime);
@@ -1589,6 +1606,15 @@ function applyFollowerMessage(message) {
         }
       }
 
+      var rollData = message.payload.roll;
+      if (Array.isArray(rollData) && rollData.length === 16) {
+        for (var rri = 0; rri < 16; rri++) {
+          var rvv = Number(rollData[rri]);
+          leadRoll[rri] = isNaN(rvv) ? -1 : Math.max(-1, Math.min(11, Math.floor(rvv)));
+        }
+        buildRollPanel();
+      }
+
       refreshAllCells();
       markActiveScene(-1);
       markActivePreset(-1);
@@ -1628,8 +1654,8 @@ function updatePeerCount() {
 }
 
 function broadcastGrid() {
-  postSync('grid', { rows: gridState, velocity: velocityGrid });
-  sendP2p('grid', { rows: gridState, velocity: velocityGrid });
+  postSync('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll });
+  sendP2p('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll });
 }
 
 var euclidWrap = document.getElementById('euclidRows');
@@ -3733,15 +3759,87 @@ function buildHarmonyChordPad() {
 harmonyKeySelect.addEventListener('change', function () {
   harmonyKey = 48 + Number(harmonyKeySelect.value);
   buildHarmonyChordPad();
+  buildRollPanel();
 });
 
 harmonyScaleSelect.addEventListener('change', function () {
   harmonyScaleType = harmonyScaleSelect.value;
   buildHarmonyChordPad();
+  buildRollPanel();
 });
 
 buildHarmonySelectors();
 buildHarmonyChordPad();
+
+var leadRoll = (function () {
+  var arr = [];
+  for (var lri = 0; lri < 16; lri++) arr.push(-1);
+  return arr;
+})();
+
+function buildRollPanel() {
+  var panel = document.getElementById('rollPanel');
+  panel.innerHTML = '';
+
+  var intervals = HARMONY_SCALES[harmonyScaleType];
+  var keyPc = harmonyKey % 12;
+
+  for (var deg = intervals.length - 1; deg >= 0; deg--) {
+    var rowEl = document.createElement('div');
+    rowEl.style.display = 'flex';
+    rowEl.style.gap = '3px';
+    rowEl.style.alignItems = 'center';
+
+    var labelEl = document.createElement('span');
+    labelEl.style.width = '34px';
+    labelEl.style.textAlign = 'center';
+    labelEl.style.fontSize = '0.65rem';
+    labelEl.style.color = 'rgba(255, 255, 255, 0.55)';
+    labelEl.style.direction = 'ltr';
+    labelEl.textContent = HARMONY_NOTE_NAMES[(keyPc + intervals[deg]) % 12];
+    rowEl.appendChild(labelEl);
+
+    for (var col = 0; col < 16; col++) {
+      (function (degree, stepIdx) {
+        var cellEl = document.createElement('button');
+        cellEl.type = 'button';
+        cellEl.style.flex = '1';
+        cellEl.style.height = '18px';
+        cellEl.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+        cellEl.style.borderRadius = '5px';
+        cellEl.style.padding = '0';
+        cellEl.style.cursor = 'pointer';
+
+        if (leadRoll[stepIdx] === degree) {
+          cellEl.style.background = 'var(--cyan)';
+          cellEl.style.boxShadow = '0 0 10px rgba(0, 240, 255, 0.7)';
+        } else {
+          cellEl.style.background = 'rgba(255, 255, 255, 0.05)';
+          cellEl.style.boxShadow = 'none';
+        }
+
+        cellEl.addEventListener('click', function () {
+          leadRoll[stepIdx] = leadRoll[stepIdx] === degree ? -1 : degree;
+          buildRollPanel();
+          broadcastGrid();
+        });
+
+        rowEl.appendChild(cellEl);
+      })(deg, col);
+    }
+
+    panel.appendChild(rowEl);
+  }
+}
+
+document.getElementById('rollClearBtn').addEventListener('click', function () {
+  for (var rci = 0; rci < 16; rci++) leadRoll[rci] = -1;
+  buildRollPanel();
+  broadcastGrid();
+  statusLine.textContent = 'המגילה נוקתה ✦ הליד חוזר לנתיב הגורל';
+});
+
+buildRollPanel();
 
 var journeyArmed = false;
 var journeyEvents = [];
