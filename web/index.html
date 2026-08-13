@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="color-scheme" content="dark"/>
-<title>PSYSTAR ✦ מכונת התודעה · שלב 4</title>
+<title>PSYSTAR ✦ PSYSTAR ✦ מכונת התודעה ✦</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/heebo@5.0.12/index.css"/>
 <link rel="manifest" href="./manifest.webmanifest"/>
 <meta name="theme-color" content="#7b2ff7"/>
@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 14 · מנוע האבולוציה · מוטציה וטרנספורמציה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 15 · עורך השירים · שרשרת סצנות</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -490,6 +490,28 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">עורך השירים · שרשרת סצנות</span>
+    <div class="dial">
+      <label for="songSceneSelect">סצנה</label>
+      <select id="songSceneSelect"></select>
+    </div>
+    <div class="dial">
+      <label for="songBarsSelect">תיבות</label>
+      <select id="songBarsSelect"></select>
+    </div>
+    <button id="songAddBtn" class="orb ghost" type="button">הוספה לשיר ✚</button>
+    <button id="songUndoBtn" class="orb ghost" type="button">הסרת אחרון</button>
+    <button id="songClearBtn" class="orb ghost" type="button">ניקוי שיר</button>
+    <div class="dial">
+      <label for="songLoopCheck">לולאה</label>
+      <input id="songLoopCheck" type="checkbox" checked style="accent-color: var(--magenta); width: 18px; height: 18px;"/>
+    </div>
+    <button id="arrangerBtn" class="orb gold" type="button">ניגון שיר ▶</button>
+    <button id="songSaveBtn" class="orb ghost" type="button">שמירה לספרייה</button>
+    <div id="songChain" style="width: 100%; text-align: center; color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; letter-spacing: 0.08em; min-height: 1.2em; direction: rtl;">השיר ריק ✦ הוסיפו סצנות</div>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">זיכרון המסע · יומן · יצוא · יבוא</span>
     <button id="journeyBtn" class="orb ghost" type="button">יומן מסע ●</button>
     <button id="replayBtn" class="orb ghost" type="button">ניגון יומן ✦</button>
@@ -555,7 +577,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מעבדת אבולוציה · אקורדים · סולמות · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">עורך שירים · מעבדת אבולוציה · אקורדים · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1660,6 +1682,11 @@ songBtn.addEventListener('click', function () {
   songMode = !songMode;
   songBtn.classList.toggle('active', songMode);
 
+  if (songMode && arrangerActive) {
+    arrangerActive = false;
+    arrangerBtn.classList.remove('active');
+  }
+
   if (songMode) {
     stepsPlayed = 0;
     songSceneIndex = 0;
@@ -1739,6 +1766,7 @@ function scheduleLoop() {
     var anyActive = triggerStepVoices(nextStep, playTime);
     visualQueue.push({ step: nextStep, time: playTime, active: anyActive });
     advanceSongIfNeeded();
+    arrangerTick();
 
     nextStep = (nextStep + 1) % STEPS;
     nextStepTime += secondsPerStep();
@@ -1758,6 +1786,7 @@ function startEngine() {
   nextStepTime = audioCtx.currentTime + 0.06;
   visualQueue = [];
   currentStep = -1;
+  arrangerSteps = 0;
 
   if (songMode) {
     stepsPlayed = 0;
@@ -1774,6 +1803,11 @@ function startEngine() {
 
 function stopEngine() {
   running = false;
+
+  if (arrangerActive) {
+    arrangerActive = false;
+    arrangerBtn.classList.remove('active');
+  }
   if (timerId) clearInterval(timerId);
   timerId = null;
   visualQueue = [];
@@ -2294,6 +2328,197 @@ retrogradeBtn.addEventListener('click', function () {
   applyEvolvedGrid(retro, 'רטרוגרד ✦ הזמן נע אחורה');
 });
 
+var songSteps = [];
+var songLoop = true;
+var arrangerActive = false;
+var arrangerSteps = 0;
+var songCurrentScene = -1;
+
+var songSceneSelect = document.getElementById('songSceneSelect');
+var songBarsSelect = document.getElementById('songBarsSelect');
+var songAddBtn = document.getElementById('songAddBtn');
+var songUndoBtn = document.getElementById('songUndoBtn');
+var songClearBtn = document.getElementById('songClearBtn');
+var songLoopCheck = document.getElementById('songLoopCheck');
+var arrangerBtn = document.getElementById('arrangerBtn');
+var songSaveBtn = document.getElementById('songSaveBtn');
+var songChainEl = document.getElementById('songChain');
+
+(function buildSongSelectors() {
+  SCENES.forEach(function (scene, i) {
+    var opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = scene.name;
+    songSceneSelect.appendChild(opt);
+  });
+
+  [1, 2, 4, 8].forEach(function (bars) {
+    var barsOpt = document.createElement('option');
+    barsOpt.value = String(bars);
+    barsOpt.textContent = String(bars);
+    songBarsSelect.appendChild(barsOpt);
+  });
+
+  songBarsSelect.value = '2';
+})();
+
+function arrangerTotalBars() {
+  var sum = 0;
+  for (var i = 0; i < songSteps.length; i++) {
+    sum += Math.max(0, songSteps[i].bars);
+  }
+  return sum;
+}
+
+function arrangerSceneAtBar(bar) {
+  if (songSteps.length === 0) return -1;
+
+  var total = arrangerTotalBars();
+  if (total === 0) return -1;
+
+  var b = bar;
+  if (songLoop) {
+    b = ((bar % total) + total) % total;
+  } else if (bar < 0 || bar >= total) {
+    return -1;
+  }
+
+  var acc = 0;
+  for (var i = 0; i < songSteps.length; i++) {
+    if (b < acc + songSteps[i].bars) {
+      return songSteps[i].sceneIndex;
+    }
+    acc += songSteps[i].bars;
+  }
+
+  return -1;
+}
+
+function renderSongChain() {
+  if (songSteps.length === 0) {
+    songChainEl.textContent = 'השיר ריק ✦ הוסיפו סצנות';
+    return;
+  }
+
+  var parts = songSteps.map(function (step, i) {
+    return (i + 1) + '. ' + SCENES[step.sceneIndex].name + ' ×' + step.bars;
+  });
+
+  songChainEl.textContent = parts.join(' ← ') + (songLoop ? ' ⟲' : '');
+}
+
+songAddBtn.addEventListener('click', function () {
+  var sceneIdx = Number(songSceneSelect.value);
+  var bars = Number(songBarsSelect.value);
+
+  if (songSteps.length >= 24) {
+    statusLine.textContent = 'השיר מלא ✦ 24 חלקים זה מספיק לכל מסע';
+    return;
+  }
+
+  songSteps.push({ sceneIndex: sceneIdx, bars: bars });
+  renderSongChain();
+  statusLine.textContent = 'סצנה נוספה לשיר ✦ ' + songSteps.length + ' חלקים · ' + arrangerTotalBars() + ' תיבות';
+});
+
+songUndoBtn.addEventListener('click', function () {
+  if (songSteps.length === 0) {
+    statusLine.textContent = 'השיר כבר ריק';
+    return;
+  }
+
+  songSteps.pop();
+  renderSongChain();
+  statusLine.textContent = 'החלק האחרון הוסר ✦ נותרו ' + songSteps.length + ' חלקים';
+});
+
+songClearBtn.addEventListener('click', function () {
+  songSteps = [];
+  renderSongChain();
+  statusLine.textContent = 'השיר נוקה ✦ דף חדש';
+});
+
+songLoopCheck.addEventListener('change', function () {
+  songLoop = songLoopCheck.checked;
+  renderSongChain();
+});
+
+arrangerBtn.addEventListener('click', function () {
+  if (songSteps.length === 0) {
+    statusLine.textContent = 'השיר ריק ✦ הוסיפו סצנות קודם';
+    return;
+  }
+
+  arrangerActive = !arrangerActive;
+  arrangerBtn.classList.toggle('active', arrangerActive);
+
+  if (arrangerActive) {
+    if (songMode) {
+      songMode = false;
+      songBtn.classList.remove('active');
+    }
+
+    arrangerSteps = 0;
+    songCurrentScene = -1;
+
+    if (!running) startEngine();
+
+    statusLine.textContent = 'השיר מתנגן ✦ ' + songSteps.length + ' חלקים · ' + arrangerTotalBars() + ' תיבות' + (songLoop ? ' · לולאה' : '');
+  } else {
+    statusLine.textContent = 'ניגון השיר נעצר';
+  }
+});
+
+songSaveBtn.addEventListener('click', function () {
+  if (songSteps.length === 0) {
+    statusLine.textContent = 'אין שיר לשמירה ✦ הוסיפו סצנות קודם';
+    return;
+  }
+
+  var name = dreamName.value.trim() || 'שיר ' + new Date().toLocaleTimeString();
+
+  libraryAddItem({
+    name: name,
+    kind: 'song',
+    createdAt: Date.now(),
+    payload: JSON.stringify({ name: name, steps: songSteps, loop: songLoop })
+  });
+
+  refreshDreamSelect();
+  dreamSelect.value = name;
+  statusLine.textContent = 'השיר נשמר בספרייה ✧ ' + name;
+});
+
+function arrangerTick() {
+  if (!arrangerActive || songSteps.length === 0) return;
+  if (syncRole === 'follower') return;
+
+  arrangerSteps++;
+
+  if (arrangerSteps % 16 !== 0) return;
+
+  var bar = Math.floor(arrangerSteps / 16);
+  var total = arrangerTotalBars();
+
+  if (!songLoop && bar >= total) {
+    arrangerActive = false;
+    arrangerBtn.classList.remove('active');
+    statusLine.textContent = 'השיר הסתיים ✦ ' + songSteps.length + ' חלקים נוגנו עד תום';
+    return;
+  }
+
+  var sceneIdx = arrangerSceneAtBar(bar);
+
+  if (sceneIdx >= 0 && sceneIdx !== songCurrentScene) {
+    songCurrentScene = sceneIdx;
+    setSceneGrid(sceneIdx);
+    postSync('scene', { index: sceneIdx });
+    sendP2p('scene', { index: sceneIdx });
+    captureSceneEvent(sceneIdx);
+    statusLine.textContent = 'השיר מתקדם ✦ ' + SCENES[sceneIdx].name;
+  }
+}
+
 var LIBRARY_KEY = 'psystar.library.v1';
 var MAX_DREAMS = 12;
 
@@ -2319,7 +2544,7 @@ function loadLibraryFromStorage() {
     for (var i = 0; i < parsed.items.length; i++) {
       var item = parsed.items[i];
       if (item && typeof item.name === 'string' && item.name.length > 0 &&
-          (item.kind === 'scene' || item.kind === 'journey') &&
+          (item.kind === 'scene' || item.kind === 'journey' || item.kind === 'song') &&
           typeof item.createdAt === 'number' && typeof item.payload === 'string') {
         valid.push(item);
       }
@@ -2376,7 +2601,7 @@ function refreshDreamSelect() {
   dreamLibrary.items.forEach(function (item) {
     var opt = document.createElement('option');
     opt.value = item.name;
-    opt.textContent = (item.kind === 'journey' ? 'מסע: ' : 'חלום: ') + item.name;
+    opt.textContent = (item.kind === 'song' ? 'שיר: ' : item.kind === 'journey' ? 'מסע: ' : 'חלום: ') + item.name;
     dreamSelect.appendChild(opt);
   });
 
@@ -2449,7 +2674,7 @@ dreamLoadBtn.addEventListener('click', function () {
       applyPresetToConsole(preset);
       markActivePreset(-1);
       statusLine.textContent = 'החלום נטען ✧ ' + item.name;
-    } else {
+    } else if (item.kind === 'journey') {
       var journey = JSON.parse(item.payload);
 
       if (!journey || !Array.isArray(journey.events)) {
@@ -2458,6 +2683,29 @@ dreamLoadBtn.addEventListener('click', function () {
 
       journeyEvents = journey.events.slice();
       statusLine.textContent = 'יומן המסע נטען ✦ ' + journeyEvents.length + ' אירועים · לחצו ניגון יומן';
+    } else if (item.kind === 'song') {
+      var song = JSON.parse(item.payload);
+
+      if (!song || !Array.isArray(song.steps)) {
+        throw new Error('bad song payload');
+      }
+
+      var validSteps = [];
+
+      for (var si = 0; si < song.steps.length; si++) {
+        var st = song.steps[si];
+
+        if (st && typeof st.sceneIndex === 'number' && st.sceneIndex >= 0 && st.sceneIndex < SCENES.length &&
+            typeof st.bars === 'number' && st.bars > 0) {
+          validSteps.push({ sceneIndex: st.sceneIndex, bars: Math.min(16, Math.floor(st.bars)) });
+        }
+      }
+
+      songSteps = validSteps;
+      songLoop = song.loop !== false;
+      songLoopCheck.checked = songLoop;
+      renderSongChain();
+      statusLine.textContent = 'שיר נטען מהספרייה ✧ ' + songSteps.length + ' חלקים · לחצו ניגון שיר';
     }
   } catch (err) {
     statusLine.textContent = 'החלום הזה פגום ולא ניתן לטעינה';
