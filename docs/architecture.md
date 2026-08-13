@@ -61,6 +61,10 @@ song domain היה המודול הראשון שנבדק אבל מעולם לא �
 
 manifest + service worker הופכים את הקונסולה לאפליקציה עצמאית: shell נשמר במטמון בהתקנה, בקשות נענות מהמטמון תחילה, ונפילה לרשת מתעדכנת בשקט. בלי חיבור — המקדש עדיין עובד, כי כל הנכסים הקריטיים (index, manifest, אייקונים) נשמרים מראש.
 
+## זרימת שער ה-Foundation (Canonical Consumer)
+
+שני מודולים מול את psy-foundation בלי לגעת בו (Rule 0): foundation-protocol משקף את ששת סוגי MusicalEvent של protocol v1 עם ולידציה וערוץ InMemoryChannel בסמנטיקה זהה למקור (subscribe אחרי close זורק, publish אחרי close נבלע); foundation-device משקף את חוזה PsyDevice של device-sdk v1, כולל TransportState סריאליזבלי במקום אובייקט transport חי (שאינו קנוני עדיין). בקונסולה, השער מפרסם beat ו-note לכל צעד מנוגן, והמכשיר צורך אותם בחזרה — לולאת contract מלאה שמוכיחה ש-PSYSTAR יכול להיות הצרכן השני של הפלטפורמה.
+
 ## זרימת ספריית החלומות (Library)
 
 סצנות ויומנים נשמרים כ-payload JSON בתוך slots עם שם וסוג. הקיבולת מוגבלת, והוותיקים ביותר מתפנים אוטומטית. הכול משורשר ל-localStorage, ויומנים יכולים גם לצאת כקובץ JSON נייד בין מכשירים — כך מסע שנוגן במכשיר אחד יכול להינגן במכשיר אחר.
