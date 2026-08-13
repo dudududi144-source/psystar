@@ -55,6 +55,12 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - מארח = מוביל: משדר play/stop/bpm/scene/grid לעולם האורח בזמן אמת ✔
 - refactor של applyFollowerMessage — ערוץ אחד משותף לרשת מקומית ולגשר P2P ✔
 
+## שלב 12 · נשימה אנושית — הושלם ✔
+- Humanizer — PRNG זרעים mulberry32, jitter מהירות, סחיפת זמן ±18ms, הערות רפאים ✔
+- Accent domain — הגברת אקסנט 1.35x עם תקרה, grid אקסנטים ✔
+- בקונסולה: Shift+קליק מדליק אקסנט זהב, סליידר נשימה אנושית 0-100% ✔
+- הבחנה מוזיקלית: בס לא מדולג לעולם, MIDI שומר על התבנית גם כשהסאונד מדלג ✔
+
 ## אופק · מה הלאה
 - חיבור ישיר ל-psy-foundation ברגע ש-transport יתקנן
 - MIDI driver אמיתי
