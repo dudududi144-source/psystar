@@ -1,2 +1,2 @@
-[test]
-preload = []
+# PSYSTAR · bun configuration
+# Test runner intentionally uses bun defaults - no preload needed.
