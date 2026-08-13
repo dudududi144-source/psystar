@@ -1767,6 +1767,7 @@ function triggerStepVoices(stepIndex, when) {
 function advanceSongIfNeeded() {
   if (!songMode) return;
   if (syncRole === 'follower') return;
+  if (p2pRole === 'guest') return;
 
   stepsPlayed++;
 
@@ -1817,6 +1818,7 @@ function startEngine() {
   visualQueue = [];
   currentStep = -1;
   arrangerSteps = 0;
+  foundStepCounter = 0;
 
   if (songMode) {
     stepsPlayed = 0;
@@ -2522,6 +2524,7 @@ songSaveBtn.addEventListener('click', function () {
 function arrangerTick() {
   if (!arrangerActive || songSteps.length === 0) return;
   if (syncRole === 'follower') return;
+  if (p2pRole === 'guest') return;
 
   arrangerSteps++;
 
@@ -2552,6 +2555,7 @@ function arrangerTick() {
 var foundChannel = null;
 var foundDevice = null;
 var foundConnected = false;
+var foundStepCounter = 0;
 
 var foundStatusEl = document.getElementById('foundStatus');
 var foundEventsEl = document.getElementById('foundEvents');
@@ -2664,6 +2668,7 @@ foundConnectBtn.addEventListener('click', function () {
   });
 
   foundChannel.subscribe(function (evt) {
+    if (evt && evt.source === deviceId) return;
     foundDevice.onEvent(evt);
   });
 
@@ -2676,10 +2681,12 @@ foundConnectBtn.addEventListener('click', function () {
 function foundPublishStep(stepIndex) {
   if (!foundConnected || !foundChannel) return;
 
+  foundStepCounter++;
   var now = Date.now();
+  var currentBar = Math.floor((foundStepCounter - 1) / 16);
 
   if (stepIndex % 4 === 0) {
-    foundChannel.publish({ type: 'beat', beat: Math.floor(stepIndex / 4), bar: 0, at: now });
+    foundChannel.publish({ type: 'beat', beat: Math.floor(stepIndex / 4), bar: currentBar, source: deviceId, at: now });
   }
 
   for (var fr = 0; fr < ROWS.length; fr++) {
@@ -2690,6 +2697,7 @@ function foundPublishStep(stepIndex) {
         velocity: 100,
         duration: 0.1,
         channel: ROWS[fr].id,
+        source: deviceId,
         at: now
       });
     }
@@ -3379,6 +3387,7 @@ function decodePackLocal(raw) {
     var parsed = JSON.parse(String(raw));
 
     if (!parsed || typeof parsed.name !== 'string' || parsed.name.length === 0) return null;
+    if (typeof parsed.version !== 'number') return null;
     if (!Array.isArray(parsed.items)) return null;
 
     for (var pi = 0; pi < parsed.items.length; pi++) {
