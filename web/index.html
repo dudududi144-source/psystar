@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 16 · אזרח ה-Foundation · צרכן קנוני</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 17 · חבילות משפחתיות · ספריות ניידות</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -511,6 +511,14 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">חבילות משפחתיות · ספריות ניידות</span>
+    <button id="familyPackBtn" class="orb gold" type="button">חבילת הבית ✦</button>
+    <button id="exportPackBtn" class="orb ghost" type="button">יצוא ספרייה ⬇</button>
+    <button id="importPackBtn" class="orb ghost" type="button">יבוא חבילה ⬆</button>
+    <input id="packImportInput" type="file" accept=".json,application/json" style="display:none;"/>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">עורך השירים · שרשרת סצנות</span>
     <div class="dial">
       <label for="songSceneSelect">סצנה</label>
@@ -598,7 +606,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3354,6 +3362,153 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(function () {});
   });
 }
+
+var familyPackBtn = document.getElementById('familyPackBtn');
+var exportPackBtn = document.getElementById('exportPackBtn');
+var importPackBtn = document.getElementById('importPackBtn');
+var packImportInput = document.getElementById('packImportInput');
+
+function isValidPackItem(item) {
+  return item && typeof item.name === 'string' && item.name.length > 0 &&
+    (item.kind === 'scene' || item.kind === 'journey' || item.kind === 'song') &&
+    typeof item.createdAt === 'number' && typeof item.payload === 'string';
+}
+
+function decodePackLocal(raw) {
+  try {
+    var parsed = JSON.parse(String(raw));
+
+    if (!parsed || typeof parsed.name !== 'string' || parsed.name.length === 0) return null;
+    if (!Array.isArray(parsed.items)) return null;
+
+    for (var pi = 0; pi < parsed.items.length; pi++) {
+      if (!isValidPackItem(parsed.items[pi])) return null;
+    }
+
+    return parsed;
+  } catch (err) {
+    return null;
+  }
+}
+
+function mergePackItems(items) {
+  for (var mi = 0; mi < items.length; mi++) {
+    libraryAddItem(items[mi]);
+  }
+
+  refreshDreamSelect();
+  return items.length;
+}
+
+function buildFamilyPack() {
+  var items = [];
+
+  var goldenGate = {
+    name: 'שער הזהב',
+    rows: [
+      [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0],
+      [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    ],
+    params: { bpm: 128, swing: 10, intensity: 6, attack: 10, release: 350, crush: 0, phaser: 20, delay: 55, reverb: 50 }
+  };
+  items.push({ name: goldenGate.name, kind: 'scene', createdAt: 0, payload: JSON.stringify(goldenGate) });
+
+  var deepSpiral = {
+    name: 'ספירלת המעמקים',
+    rows: [
+      [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0],
+      [0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]
+    ],
+    params: { bpm: 112, swing: 8, intensity: 5, attack: 45, release: 900, crush: 25, phaser: 30, delay: 45, reverb: 70 }
+  };
+  items.push({ name: deepSpiral.name, kind: 'scene', createdAt: 0, payload: JSON.stringify(deepSpiral) });
+
+  var firstSpark = {
+    name: 'ניצוץ ראשון',
+    bpm: 122,
+    events: [
+      { time: 0, type: 'step', data: { step: 0, mask: 1 } },
+      { time: 492, type: 'step', data: { step: 4, mask: 9 } },
+      { time: 984, type: 'step', data: { step: 8, mask: 5 } },
+      { time: 1476, type: 'step', data: { step: 12, mask: 9 } },
+      { time: 1968, type: 'scene', data: { index: 1 } }
+    ]
+  };
+  items.push({ name: firstSpark.name, kind: 'journey', createdAt: 0, payload: JSON.stringify(firstSpark) });
+
+  var dawnSong = {
+    name: 'שיר השחר',
+    steps: [
+      { sceneIndex: 0, bars: 2 },
+      { sceneIndex: 1, bars: 2 },
+      { sceneIndex: 2, bars: 2 },
+      { sceneIndex: 0, bars: 2 }
+    ],
+    loop: true
+  };
+  items.push({ name: dawnSong.name, kind: 'song', createdAt: 0, payload: JSON.stringify(dawnSong) });
+
+  return { name: 'חבילת הבית', version: 1, items: items };
+}
+
+familyPackBtn.addEventListener('click', function () {
+  var pack = buildFamilyPack();
+  var count = mergePackItems(pack.items);
+
+  statusLine.textContent = 'חבילת הבית נטענה ✦ ' + count + ' מתנות נכנסו לספריית החלומות';
+});
+
+exportPackBtn.addEventListener('click', function () {
+  if (dreamLibrary.items.length === 0) {
+    statusLine.textContent = 'הספרייה ריקה ✦ אין מה לארוז';
+    return;
+  }
+
+  var pack = { name: 'ספריית PSYSTAR', version: 1, items: dreamLibrary.items };
+  var json = JSON.stringify(pack, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-pack.json';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'הספרייה ארזה ✦ ' + dreamLibrary.items.length + ' חלומות ירדו כחבילה ניידת';
+});
+
+importPackBtn.addEventListener('click', function () {
+  packImportInput.click();
+});
+
+packImportInput.addEventListener('change', function () {
+  var file = packImportInput.files && packImportInput.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+
+  reader.onload = function () {
+    var pack = decodePackLocal(reader.result);
+
+    if (!pack) {
+      statusLine.textContent = 'קובץ החבילה לא תקין ✦ היבוא נדחה';
+      return;
+    }
+
+    var count = mergePackItems(pack.items);
+    statusLine.textContent = 'חבילה יובאה ✦ ' + pack.name + ' · ' + count + ' חלומות נכנסו לספרייה';
+  };
+
+  reader.readAsText(file);
+  packImportInput.value = '';
+});
 
 var HARMONY_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
