@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 11 · גשר בין עולמות · P2P ללא שרת</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 12 · נשימה אנושית · אקסנטים · הומניזציה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -366,6 +366,11 @@ select option { background: #12082b; color: #fff; }
     <button id="undoBtn" class="orb ghost" type="button">↶ ביטול</button>
     <button id="redoBtn" class="orb ghost" type="button">↷ ביצוע מחדש</button>
     <button id="midiInputBtn" class="orb ghost" type="button">כניסת MIDI 🎹</button>
+    <div class="dial">
+      <label for="humanityRange">נשימה אנושית</label>
+      <input id="humanityRange" type="range" min="0" max="100" value="0"/>
+      <span id="humanityValue">0%</span>
+    </div>
   </section>
 
   <section class="scenes">
@@ -520,7 +525,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">גשר P2P בין עולמות · טאפ קצב · ביטול · MIDI דו-כיווני · אפליקציה אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">Shift+קליק = אקסנט זהב · נשימה אנושית · גשר P2P · טאפ · ביטול · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -859,7 +864,7 @@ function voiceBass(stepIndex, when) {
   var atk = Math.max(0.003, attackTime);
   var tail = 0.18 + releaseTime * 0.35;
   gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.linearRampToValueAtTime(0.5, when + atk);
+  gain.gain.linearRampToValueAtTime(0.5 * stepVelocity, when + atk);
   gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
 
   osc.connect(vfilter);
@@ -882,7 +887,7 @@ function voiceLead(stepIndex, when) {
   var atk = Math.max(0.003, attackTime);
   var tail = 0.2 + releaseTime * 0.5;
   gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.linearRampToValueAtTime(0.16, when + atk);
+  gain.gain.linearRampToValueAtTime(0.16 * stepVelocity, when + atk);
   gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
 
   osc.connect(gain);
@@ -911,7 +916,7 @@ function voicePad(stepIndex, when) {
   var atk = Math.max(0.02, attackTime * 2);
   var tail = 0.6 + releaseTime;
   gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.linearRampToValueAtTime(0.12, when + atk);
+  gain.gain.linearRampToValueAtTime(0.12 * stepVelocity, when + atk);
   gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
 
   oscA.connect(vfilter);
@@ -937,7 +942,7 @@ function voiceSpark(stepIndex, when) {
   var atk = Math.max(0.002, attackTime * 0.5);
   var tail = 0.25 + releaseTime * 0.6;
   gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.linearRampToValueAtTime(0.2, when + atk);
+  gain.gain.linearRampToValueAtTime(0.2 * stepVelocity, when + atk);
   gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
 
   osc.connect(gain);
@@ -1056,9 +1061,13 @@ ROWS.forEach(function (row, rowIndex) {
         cell.style.boxShadow = '0 0 14px ' + row.color;
       }
 
-      cell.addEventListener('click', function () {
-        pushGridHistory();
-        gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
+      cell.addEventListener('click', function (event) {
+        if (event.shiftKey) {
+          accentGrid[rowIndex][stepIndex] = !accentGrid[rowIndex][stepIndex];
+        } else {
+          pushGridHistory();
+          gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
+        }
         refreshCell(rowIndex, stepIndex);
         markActiveScene(-1);
         markActivePreset(-1);
@@ -1084,6 +1093,14 @@ function refreshCell(rowIndex, stepIndex) {
   } else {
     cell.style.background = '';
     cell.style.boxShadow = '';
+  }
+
+  if (accentGrid[rowIndex][stepIndex]) {
+    cell.style.outline = '2px solid rgba(255, 209, 102, 0.85)';
+    cell.style.outlineOffset = '-2px';
+  } else {
+    cell.style.outline = '';
+    cell.style.outlineOffset = '';
   }
 }
 
@@ -1624,11 +1641,18 @@ function triggerStepVoices(stepIndex, when) {
     anyActive = true;
     sendMidiTrigger(r, stepIndex);
 
-    if (ROWS[r].id === 'bass') voiceBass(stepIndex, when);
-    if (ROWS[r].id === 'lead') voiceLead(stepIndex, when);
-    if (ROWS[r].id === 'pad') voicePad(stepIndex, when);
-    if (ROWS[r].id === 'spark') voiceSpark(stepIndex, when);
+    if (humanShouldSkip(r)) continue;
+
+    var humanWhen = when + humanDrift();
+    stepVelocity = humanVelocity(r, stepIndex);
+
+    if (ROWS[r].id === 'bass') voiceBass(stepIndex, humanWhen);
+    if (ROWS[r].id === 'lead') voiceLead(stepIndex, humanWhen);
+    if (ROWS[r].id === 'pad') voicePad(stepIndex, humanWhen);
+    if (ROWS[r].id === 'spark') voiceSpark(stepIndex, humanWhen);
   }
+
+  stepVelocity = 1;
 
   if (journeyArmed && !replayActive && anyActive) {
     var journeyMask = 0;
@@ -2432,6 +2456,48 @@ tapBtn.addEventListener('click', function () {
     statusLine.textContent = 'המשך לטפוט ◉ הקצב ייקלט';
   }
 });
+
+var accentGrid = (function () {
+  var grid = [];
+  for (var ar = 0; ar < 4; ar++) {
+    var arow = [];
+    for (var ac = 0; ac < 16; ac++) arow.push(false);
+    grid.push(arow);
+  }
+  return grid;
+})();
+
+var humanityAmount = 0;
+var stepVelocity = 1;
+
+var humanityRange = document.getElementById('humanityRange');
+var humanityValueEl = document.getElementById('humanityValue');
+
+humanityRange.addEventListener('input', function () {
+  humanityAmount = Number(humanityRange.value) / 100;
+  humanityValueEl.textContent = humanityRange.value + '%';
+});
+
+function humanDrift() {
+  if (humanityAmount <= 0) return 0;
+  return (Math.random() * 2 - 1) * humanityAmount * 0.018;
+}
+
+function humanShouldSkip(rowIndex) {
+  if (rowIndex === 0) return false;
+  if (humanityAmount <= 0.5) return false;
+  return Math.random() < (humanityAmount - 0.5) * 0.3;
+}
+
+function humanVelocity(rowIndex, stepIndex) {
+  var scale = accentGrid[rowIndex][stepIndex] ? 1.35 : 1;
+
+  if (humanityAmount > 0) {
+    scale *= 1 + (Math.random() * 2 - 1) * humanityAmount * 0.18;
+  }
+
+  return Math.max(0.2, Math.min(1.6, scale));
+}
 
 var gridHistory = [];
 var gridFuture = [];
