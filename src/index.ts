@@ -18,6 +18,8 @@ export * from './engine/foundation-adapter.ts';
 export * from './engine/envelope.ts';
 export * from './engine/voice-manager.ts';
 export * from './engine/effects-rack.ts';
+export * from './engine/midi-driver.ts';
+export * from './engine/recorder.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
