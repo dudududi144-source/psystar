@@ -53,3 +53,24 @@ test('morphPresets blends bpm at midpoint', () => {
 
   expect(mid.params.bpm).toBe(Math.round((presets[0].params.bpm + presets[1].params.bpm) / 2));
 });
+
+
+test('morphPresets survives mismatched row shapes', () => {
+  const a = builtInPresets()[0];
+  const broken = { name: 'broken', rows: [[true, false]], params: createDefaultParams() };
+
+  const result = morphPresets(a, broken as never, 0.5);
+
+  expect(result.rows.length).toBe(4);
+  expect(result.rows[0].length).toBe(16);
+});
+
+test('morphPresets is NaN-safe with missing params', () => {
+  const a = builtInPresets()[0];
+  const empty = { name: 'empty', rows: builtInPresets()[1].rows, params: {} };
+
+  const result = morphPresets(a, empty as never, 1);
+
+  expect(isNaN(result.params.bpm)).toBe(false);
+  expect(result.params.bpm).toBe(0);
+});
