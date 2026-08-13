@@ -1,2 +1,2 @@
 # PSYSTAR · bun configuration
-# Test runner intentionally uses bun defaults - no preload needed.
+# Test runner uses bun defaults - no extra settings required.
