@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 19 · מגילת התווים · פיאנו-רול חי</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 20 · זיכרון מלא · ביטול לכל שכבות העריכה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -615,7 +615,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מגילת תווים לליד · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1165,6 +1165,7 @@ ROWS.forEach(function (row, rowIndex) {
 
       cell.addEventListener('click', function (event) {
         if (event.shiftKey) {
+          pushGridHistory();
           accentGrid[rowIndex][stepIndex] = !accentGrid[rowIndex][stepIndex];
         } else {
           pushGridHistory();
@@ -1178,6 +1179,7 @@ ROWS.forEach(function (row, rowIndex) {
 
       cell.addEventListener('contextmenu', function (event) {
         event.preventDefault();
+        pushGridHistory();
         velocityGrid[rowIndex][stepIndex] = nextVelocityTierLocal(velocityGrid[rowIndex][stepIndex]);
         refreshCell(rowIndex, stepIndex);
         broadcastGrid();
@@ -3143,29 +3145,54 @@ function captureGridSnapshot() {
   return gridState.map(function (row) { return row.slice(); });
 }
 
+function captureFullSnapshot() {
+  return {
+    grid: gridState.map(function (row) { return row.slice(); }),
+    velocity: velocityGrid.map(function (row) { return row.slice(); }),
+    accents: accentGrid.map(function (row) { return row.slice(); }),
+    roll: leadRoll.slice()
+  };
+}
+
 function pushGridHistory() {
-  gridHistory.push(captureGridSnapshot());
+  gridHistory.push(captureFullSnapshot());
   if (gridHistory.length > HISTORY_LIMIT) gridHistory.shift();
   gridFuture = [];
 }
 
-function restoreGridSnapshot(snapshot) {
-  gridState = snapshot.map(function (row) { return row.slice(); });
+function restoreFullSnapshot(snapshot) {
+  if (Array.isArray(snapshot.grid)) {
+    gridState = snapshot.grid.map(function (row) { return row.slice(); });
+  }
+
+  if (Array.isArray(snapshot.velocity)) {
+    velocityGrid = snapshot.velocity.map(function (row) { return row.slice(); });
+  }
+
+  if (Array.isArray(snapshot.accents)) {
+    accentGrid = snapshot.accents.map(function (row) { return row.slice(); });
+  }
+
+  if (Array.isArray(snapshot.roll)) {
+    leadRoll = snapshot.roll.slice();
+  }
+
   refreshAllCells();
+  buildRollPanel();
   markActiveScene(-1);
   markActivePreset(-1);
 }
 
 function undoGrid() {
   if (gridHistory.length === 0) {
-    statusLine.textContent = 'אין מה לבטל ✦ ערכת שינוי קודם';
+    statusLine.textContent = 'אין מה לבטל ✦ ערכו שינוי קודם';
     return;
   }
 
-  gridFuture.push(captureGridSnapshot());
-  restoreGridSnapshot(gridHistory.pop());
+  gridFuture.push(captureFullSnapshot());
+  restoreFullSnapshot(gridHistory.pop());
   broadcastGrid();
-  statusLine.textContent = 'ביטול ✦ הרשת חזרה אחורה';
+  statusLine.textContent = 'ביטול ✦ כל שכבות העריכה חזרו אחורה';
 }
 
 function redoGrid() {
@@ -3174,10 +3201,10 @@ function redoGrid() {
     return;
   }
 
-  gridHistory.push(captureGridSnapshot());
-  restoreGridSnapshot(gridFuture.pop());
+  gridHistory.push(captureFullSnapshot());
+  restoreFullSnapshot(gridFuture.pop());
   broadcastGrid();
-  statusLine.textContent = 'ביצוע מחדש ✦ הרשת התקדמה קדימה';
+  statusLine.textContent = 'ביצוע מחדש ✦ כל שכבות העריכה התקדמו קדימה';
 }
 
 document.getElementById('undoBtn').addEventListener('click', undoGrid);
@@ -3819,6 +3846,7 @@ function buildRollPanel() {
         }
 
         cellEl.addEventListener('click', function () {
+          pushGridHistory();
           leadRoll[stepIdx] = leadRoll[stepIdx] === degree ? -1 : degree;
           buildRollPanel();
           broadcastGrid();
@@ -3833,6 +3861,7 @@ function buildRollPanel() {
 }
 
 document.getElementById('rollClearBtn').addEventListener('click', function () {
+  pushGridHistory();
   for (var rci = 0; rci < 16; rci++) leadRoll[rci] = -1;
   buildRollPanel();
   broadcastGrid();
