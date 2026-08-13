@@ -28,6 +28,7 @@ export * from './engine/midi-input-map.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
+export * from './integration/p2p-signaling.ts';
 export * from './ui/state.ts';
 export * from './ui/render.ts';
 export * from './app.ts';
