@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 20 · זיכרון מלא · ביטול לכל שכבות העריכה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 21 · יצוא מסע · אודיו אמיתי WAV</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -541,6 +541,16 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">יצוא מסע · אודיו אמיתי WAV</span>
+    <div class="dial">
+      <label for="wavBarsSelect">תיבות</label>
+      <select id="wavBarsSelect"></select>
+    </div>
+    <button id="wavExportBtn" class="orb gold" type="button">עיבוד והורדה ⬇</button>
+    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">זיכרון המסע · יומן · יצוא · יבוא</span>
     <button id="journeyBtn" class="orb ghost" type="button">יומן מסע ●</button>
     <button id="replayBtn" class="orb ghost" type="button">ניגון יומן ✦</button>
@@ -615,7 +625,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">יצוא WAV אמיתי · ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2757,6 +2767,281 @@ function foundPublishStep(stepIndex) {
     }
   }
 }
+
+var wavBarsSelect = document.getElementById('wavBarsSelect');
+var wavExportBtn = document.getElementById('wavExportBtn');
+
+(function buildWavSelectors() {
+  [2, 4, 8].forEach(function (bars) {
+    var opt = document.createElement('option');
+    opt.value = String(bars);
+    opt.textContent = String(bars);
+    wavBarsSelect.appendChild(opt);
+  });
+
+  wavBarsSelect.value = '4';
+})();
+
+function mulberry32Local(seed) {
+  var state = seed >>> 0;
+
+  return function () {
+    state = (state + 0x6d2b79f5) >>> 0;
+    var t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function leadNoteFor(stepIdx) {
+  var rollDegree = leadRoll[stepIdx];
+
+  if (rollDegree >= 0 && HARMONY_SCALES[harmonyScaleType][rollDegree] !== undefined) {
+    return harmonyKey + HARMONY_SCALES[harmonyScaleType][rollDegree];
+  }
+
+  return 69 + leadPenta[(stepIdx * 3) % leadPenta.length];
+}
+
+function offBass(octx, dest, stepIdx, when, vel) {
+  var semis = bassScale[stepIdx % bassScale.length];
+  var osc = octx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = midiToFreq(45 + semis);
+
+  var filt = octx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.setValueAtTime(900, when);
+  filt.frequency.exponentialRampToValueAtTime(120, when + 0.22);
+
+  var gain = octx.createGain();
+  var tail = 0.18 + releaseTime * 0.35;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.5 * vel, when + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.005 + tail);
+
+  osc.connect(filt);
+  filt.connect(gain);
+  gain.connect(dest);
+  osc.start(when);
+  osc.stop(when + tail + 0.1);
+}
+
+function offLead(octx, dest, stepIdx, when, vel) {
+  var osc = octx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.value = midiToFreq(leadNoteFor(stepIdx));
+
+  var gain = octx.createGain();
+  var tail = 0.2 + releaseTime * 0.5;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.16 * vel, when + 0.003);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.003 + tail);
+
+  osc.connect(gain);
+  gain.connect(dest);
+  osc.start(when);
+  osc.stop(when + tail + 0.1);
+}
+
+function offPad(octx, dest, stepIdx, when, vel) {
+  var semis = [0, 5][stepIdx % 2];
+  var oscA = octx.createOscillator();
+  var oscB = octx.createOscillator();
+  oscA.type = 'sawtooth';
+  oscB.type = 'sawtooth';
+  oscA.frequency.value = midiToFreq(57 + semis);
+  oscB.frequency.value = midiToFreq(57 + semis) * 1.005;
+
+  var filt = octx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = 750;
+
+  var gain = octx.createGain();
+  var atk = Math.max(0.02, attackTime * 2);
+  var tail = 0.6 + releaseTime;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.12 * vel, when + atk);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
+
+  oscA.connect(filt);
+  oscB.connect(filt);
+  filt.connect(gain);
+  gain.connect(dest);
+  oscA.start(when);
+  oscB.start(when);
+  oscA.stop(when + atk + tail + 0.1);
+  oscB.stop(when + atk + tail + 0.1);
+}
+
+function offSpark(octx, dest, stepIdx, when, vel) {
+  var semis = leadPenta[(stepIdx * 7) % leadPenta.length];
+  var osc = octx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = midiToFreq(93 + semis);
+
+  var gain = octx.createGain();
+  var tail = 0.25 + releaseTime * 0.6;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.2 * vel, when + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.002 + tail);
+
+  osc.connect(gain);
+  gain.connect(dest);
+  osc.start(when);
+  osc.stop(when + tail + 0.1);
+}
+
+function renderJourneyToWav(bars) {
+  if (typeof OfflineAudioContext === 'undefined') {
+    statusLine.textContent = 'הדפדפן לא תומך בעיבוד אופליין';
+    return;
+  }
+
+  var stepDur = 60 / bpm / 4;
+  var totalSteps = bars * 16;
+  var tail = 3;
+  var duration = totalSteps * stepDur + tail;
+  var sampleRate = 44100;
+  var octx = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
+
+  var master = octx.createGain();
+  master.gain.value = 0.8;
+  master.connect(octx.destination);
+
+  var bus = octx.createGain();
+  bus.gain.value = 1;
+
+  var filt = octx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = 1100;
+  filt.Q.value = 3;
+
+  bus.connect(filt);
+  filt.connect(master);
+
+  var delay = octx.createDelay(1.0);
+  delay.delayTime.value = 0.34;
+  var delayFilt = octx.createBiquadFilter();
+  delayFilt.type = 'lowpass';
+  delayFilt.frequency.value = 2200;
+  var feedback = octx.createGain();
+  feedback.gain.value = 0.42;
+  var delaySend = octx.createGain();
+  delaySend.gain.value = Number(delayRange.value) / 100 * 0.8;
+
+  delaySend.connect(delay);
+  delay.connect(delayFilt);
+  delayFilt.connect(feedback);
+  feedback.connect(delay);
+  delayFilt.connect(master);
+  filt.connect(delaySend);
+
+  var reverb = octx.createConvolver();
+  reverb.buffer = buildImpulse(octx, 2.6, 2.2);
+  var reverbSend = octx.createGain();
+  reverbSend.gain.value = Number(reverbRange.value) / 100 * 0.6;
+  filt.connect(reverbSend);
+  reverbSend.connect(reverb);
+  reverb.connect(master);
+
+  var rand = mulberry32Local(bpm * 1000 + bars * 17);
+
+  for (var s = 0; s < totalSteps; s++) {
+    var stepTime = 0.05 + s * stepDur;
+    var stepIdx = s % 16;
+
+    for (var r = 0; r < ROWS.length; r++) {
+      if (!gridState[r][stepIdx]) continue;
+
+      if (r !== 0 && humanityAmount > 0.5 && rand() < (humanityAmount - 0.5) * 0.3) continue;
+
+      var vel = velocityGrid[r][stepIdx] * (accentGrid[r][stepIdx] ? 1.35 : 1);
+      var drift = 0;
+
+      if (humanityAmount > 0) {
+        vel *= 1 + (rand() * 2 - 1) * humanityAmount * 0.18;
+        drift = (rand() * 2 - 1) * humanityAmount * 0.018;
+      }
+
+      vel = Math.max(0.2, Math.min(1.6, vel));
+      var voiceWhen = Math.max(0.01, stepTime + drift);
+
+      if (ROWS[r].id === 'bass') offBass(octx, bus, stepIdx, voiceWhen, vel);
+      if (ROWS[r].id === 'lead') offLead(octx, bus, stepIdx, voiceWhen, vel);
+      if (ROWS[r].id === 'pad') offPad(octx, bus, stepIdx, voiceWhen, vel);
+      if (ROWS[r].id === 'spark') offSpark(octx, bus, stepIdx, voiceWhen, vel);
+    }
+  }
+
+  octx.startRendering().then(function (rendered) {
+    var blob = encodeWavLocal(rendered);
+    var url = URL.createObjectURL(blob);
+    var anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'psystar-journey.wav';
+    anchor.click();
+
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 3000);
+
+    statusLine.textContent = 'המסע עובד ✦ ' + bars + ' תיבות של אודיו אמיתי ירדו כ-WAV';
+  }).catch(function () {
+    statusLine.textContent = 'העיבוד נכשל ✦ נסו שוב';
+  });
+}
+
+function encodeWavLocal(buffer) {
+  var left = buffer.getChannelData(0);
+  var right = buffer.getChannelData(1);
+  var numFrames = buffer.length;
+  var dataSize = numFrames * 4;
+  var ab = new ArrayBuffer(44 + dataSize);
+  var view = new DataView(ab);
+
+  function writeStr(offset, text) {
+    for (var i = 0; i < text.length; i++) {
+      view.setUint8(offset + i, text.charCodeAt(i));
+    }
+  }
+
+  function f2i16(value) {
+    var c = Math.max(-1, Math.min(1, value));
+    return c < 0 ? c * 0x8000 : c * 0x7fff;
+  }
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 2, true);
+  view.setUint32(24, buffer.sampleRate, true);
+  view.setUint32(28, buffer.sampleRate * 4, true);
+  view.setUint16(32, 4, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  var offset = 44;
+  for (var i = 0; i < numFrames; i++) {
+    view.setInt16(offset, f2i16(left[i]), true);
+    offset += 2;
+    view.setInt16(offset, f2i16(right[i]), true);
+    offset += 2;
+  }
+
+  return new Blob([ab], { type: 'audio/wav' });
+}
+
+wavExportBtn.addEventListener('click', function () {
+  var bars = Number(wavBarsSelect.value);
+  statusLine.textContent = 'המסע מעובד ✦ ' + bars + ' תיבות בדרך...';
+  renderJourneyToWav(bars);
+});
 
 var LIBRARY_KEY = 'psystar.library.v1';
 var MAX_DREAMS = 12;
