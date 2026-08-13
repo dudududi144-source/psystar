@@ -316,7 +316,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 9 · מקדש נייד · נגינה חיה · PWA</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 10 · מגע חי · טאפ · ביטול · MIDI פנימה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -342,6 +342,14 @@ select option { background: #12082b; color: #fff; }
     </div>
 
     <button id="dmtBtn" class="orb" type="button">מצב DMT</button>
+    <button id="tapBtn" class="orb gold" type="button">טאפ קצב ◉</button>
+  </section>
+
+  <section class="rack">
+    <span class="rack-title">מגע חי · ביטול · כניסת MIDI</span>
+    <button id="undoBtn" class="orb ghost" type="button">↶ ביטול</button>
+    <button id="redoBtn" class="orb ghost" type="button">↷ ביצוע מחדש</button>
+    <button id="midiInputBtn" class="orb ghost" type="button">כניסת MIDI 🎹</button>
   </section>
 
   <section class="scenes">
@@ -484,7 +492,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מקשים 1-4 מנגנים ערוצים · A עד K מנגנים תווים · מתקין כאפליקציה · עובד אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">טאפ קצב · Ctrl+Z ביטול · מקלדת MIDI נכנסת · 1-4 ערוצים · A-K תווים · אפליקציה אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1021,6 +1029,7 @@ ROWS.forEach(function (row, rowIndex) {
       }
 
       cell.addEventListener('click', function () {
+        pushGridHistory();
         gridState[rowIndex][stepIndex] = !gridState[rowIndex][stepIndex];
         refreshCell(rowIndex, stepIndex);
         markActiveScene(-1);
@@ -1095,6 +1104,8 @@ sceneButtons.forEach(function (btn, i) {
 });
 
 function randomizeGrid() {
+  pushGridHistory();
+
   var densities = [0.34, 0.3, 0.12, 0.2];
 
   for (var r = 0; r < ROWS.length; r++) {
@@ -1112,6 +1123,8 @@ function randomizeGrid() {
 }
 
 function clearGrid() {
+  pushGridHistory();
+
   for (var r = 0; r < ROWS.length; r++) {
     for (var s = 0; s < STEPS; s++) {
       gridState[r][s] = false;
@@ -1517,6 +1530,7 @@ ROWS.forEach(function (row, rowIndex) {
   });
 
   applyBtn.addEventListener('click', function () {
+    pushGridHistory();
     gridState[rowIndex] = euclideanRow(Number(pulsesInput.value), STEPS, Number(rotInput.value));
     refreshAllCells();
     markActiveScene(-1);
@@ -1530,6 +1544,8 @@ ROWS.forEach(function (row, rowIndex) {
 });
 
 document.getElementById('euclidRollBtn').addEventListener('click', function () {
+  pushGridHistory();
+
   var pulseChoices = [[3, 4, 5], [5, 6, 7, 8], [1, 2], [3, 4, 5, 6]];
 
   for (var r = 0; r < ROWS.length; r++) {
@@ -2118,6 +2134,264 @@ journeyImportInput.addEventListener('change', function () {
 
   reader.readAsText(file);
   journeyImportInput.value = '';
+});
+
+var tapTimes = [];
+var tapBtn = document.getElementById('tapBtn');
+
+tapBtn.addEventListener('click', function () {
+  var now = performance.now();
+
+  if (tapTimes.length === 0) {
+    tapTimes = [now];
+  } else {
+    var lastTap = tapTimes[tapTimes.length - 1];
+    if (now - lastTap > 2000) {
+      tapTimes = [now];
+    } else {
+      tapTimes.push(now);
+      if (tapTimes.length > 8) tapTimes = tapTimes.slice(tapTimes.length - 8);
+    }
+  }
+
+  if (tapTimes.length >= 2) {
+    var sorted = tapTimes.slice().sort(function (a, b) { return a - b; });
+    var intervals = [];
+
+    for (var i = 1; i < sorted.length; i++) {
+      var gap = sorted[i] - sorted[i - 1];
+      if (gap > 0 && gap <= 2000) intervals.push(gap);
+    }
+
+    if (intervals.length > 0) {
+      var sum = 0;
+      for (var j = 0; j < intervals.length; j++) sum += intervals[j];
+
+      var tapped = Math.round(60000 / (sum / intervals.length));
+      var clamped = Math.max(60, Math.min(180, tapped));
+
+      setSlider(bpmRange, clamped);
+      statusLine.textContent = 'טאפ קצב ✦ ' + clamped + ' BPM ישירות מהידיים';
+    }
+  } else {
+    statusLine.textContent = 'המשך לטפוט ◉ הקצב ייקלט';
+  }
+});
+
+var gridHistory = [];
+var gridFuture = [];
+var HISTORY_LIMIT = 40;
+
+function captureGridSnapshot() {
+  return gridState.map(function (row) { return row.slice(); });
+}
+
+function pushGridHistory() {
+  gridHistory.push(captureGridSnapshot());
+  if (gridHistory.length > HISTORY_LIMIT) gridHistory.shift();
+  gridFuture = [];
+}
+
+function restoreGridSnapshot(snapshot) {
+  gridState = snapshot.map(function (row) { return row.slice(); });
+  refreshAllCells();
+  markActiveScene(-1);
+  markActivePreset(-1);
+}
+
+function undoGrid() {
+  if (gridHistory.length === 0) {
+    statusLine.textContent = 'אין מה לבטל ✦ ערכת שינוי קודם';
+    return;
+  }
+
+  gridFuture.push(captureGridSnapshot());
+  restoreGridSnapshot(gridHistory.pop());
+  statusLine.textContent = 'ביטול ✦ הרשת חזרה אחורה';
+}
+
+function redoGrid() {
+  if (gridFuture.length === 0) {
+    statusLine.textContent = 'אין מה לבצע מחדש';
+    return;
+  }
+
+  gridHistory.push(captureGridSnapshot());
+  restoreGridSnapshot(gridFuture.pop());
+  statusLine.textContent = 'ביצוע מחדש ✦ הרשת התקדמה קדימה';
+}
+
+document.getElementById('undoBtn').addEventListener('click', undoGrid);
+document.getElementById('redoBtn').addEventListener('click', redoGrid);
+
+window.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ' && !e.shiftKey) {
+    e.preventDefault();
+    undoGrid();
+  } else if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && e.code === 'KeyZ') || e.code === 'KeyY')) {
+    e.preventDefault();
+    redoGrid();
+  }
+});
+
+var midiInputEnabled = false;
+var midiInputPort = null;
+var midiInputBtn = document.getElementById('midiInputBtn');
+
+function midiNoteToRow(note) {
+  if (note < 48) return 0;
+  if (note < 72) return 1;
+  if (note < 84) return 2;
+  return 3;
+}
+
+function playVoiceAtPitch(rowIndex, midiNote, velocity) {
+  if (!claimVoice()) return;
+
+  ensureLiveAudio();
+
+  var when = audioCtx.currentTime + 0.01;
+  var vel = Math.max(0.05, Math.min(1, velocity / 127));
+  var freq = midiToFreq(midiNote);
+  var atk = Math.max(0.003, attackTime);
+
+  if (rowIndex === 0) {
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+
+    var filt = audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(900, when);
+    filt.frequency.exponentialRampToValueAtTime(120, when + 0.22);
+
+    var gain = audioCtx.createGain();
+    var tail = 0.18 + releaseTime * 0.35;
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(0.5 * vel, when + atk);
+    gain.gain.exponentialRampToValueAtTime(0.001, when + atk + tail);
+
+    osc.connect(filt);
+    filt.connect(gain);
+    gain.connect(voiceBus);
+    osc.start(when);
+    osc.stop(when + atk + tail + 0.05);
+    osc.onended = releaseVoice;
+  } else if (rowIndex === 1) {
+    var oscLead = audioCtx.createOscillator();
+    oscLead.type = 'square';
+    oscLead.frequency.value = freq;
+
+    var gainLead = audioCtx.createGain();
+    var tailLead = 0.2 + releaseTime * 0.5;
+    gainLead.gain.setValueAtTime(0.0001, when);
+    gainLead.gain.linearRampToValueAtTime(0.16 * vel, when + atk);
+    gainLead.gain.exponentialRampToValueAtTime(0.001, when + atk + tailLead);
+
+    oscLead.connect(gainLead);
+    gainLead.connect(voiceBus);
+    gainLead.connect(delaySend);
+    oscLead.start(when);
+    oscLead.stop(when + atk + tailLead + 0.05);
+    oscLead.onended = releaseVoice;
+  } else if (rowIndex === 2) {
+    var oscA = audioCtx.createOscillator();
+    var oscB = audioCtx.createOscillator();
+    oscA.type = 'sawtooth';
+    oscB.type = 'sawtooth';
+    oscA.frequency.value = freq;
+    oscB.frequency.value = freq * 1.005;
+
+    var filtPad = audioCtx.createBiquadFilter();
+    filtPad.type = 'lowpass';
+    filtPad.frequency.value = 750;
+
+    var gainPad = audioCtx.createGain();
+    var tailPad = 0.6 + releaseTime;
+    gainPad.gain.setValueAtTime(0.0001, when);
+    gainPad.gain.linearRampToValueAtTime(0.12 * vel, when + Math.max(0.02, atk * 2));
+    gainPad.gain.exponentialRampToValueAtTime(0.001, when + atk + tailPad);
+
+    oscA.connect(filtPad);
+    oscB.connect(filtPad);
+    filtPad.connect(gainPad);
+    gainPad.connect(voiceBus);
+    gainPad.connect(reverbSend);
+    oscA.start(when);
+    oscB.start(when);
+    oscA.stop(when + atk + tailPad + 0.05);
+    oscB.stop(when + atk + tailPad + 0.05);
+    oscB.onended = releaseVoice;
+  } else {
+    var oscSpark = audioCtx.createOscillator();
+    oscSpark.type = 'sine';
+    oscSpark.frequency.value = freq;
+
+    var gainSpark = audioCtx.createGain();
+    var tailSpark = 0.25 + releaseTime * 0.6;
+    gainSpark.gain.setValueAtTime(0.0001, when);
+    gainSpark.gain.linearRampToValueAtTime(0.2 * vel, when + Math.max(0.002, atk * 0.5));
+    gainSpark.gain.exponentialRampToValueAtTime(0.001, when + atk + tailSpark);
+
+    oscSpark.connect(gainSpark);
+    gainSpark.connect(voiceBus);
+    gainSpark.connect(delaySend);
+    oscSpark.start(when);
+    oscSpark.stop(when + atk + tailSpark + 0.05);
+    oscSpark.onended = releaseVoice;
+  }
+
+  energy = Math.min(1.5, energy + 0.3);
+}
+
+function onMidiInputMessage(event) {
+  var data = event.data;
+  if (!data || data.length < 3) return;
+
+  var status = data[0];
+  var note = data[1];
+  var velocity = data[2];
+  var type = status & 0xf0;
+
+  if (type === 0x90 && velocity > 0) {
+    playVoiceAtPitch(midiNoteToRow(note), note, velocity);
+  }
+}
+
+midiInputBtn.addEventListener('click', function () {
+  if (midiInputEnabled) {
+    if (midiInputPort) midiInputPort.onmidimessage = null;
+    midiInputEnabled = false;
+    midiInputPort = null;
+    midiInputBtn.classList.remove('active');
+    statusLine.textContent = 'כניסת MIDI נסגרה';
+    return;
+  }
+
+  if (!navigator.requestMIDIAccess) {
+    statusLine.textContent = 'הדפדפן לא תומך ב-MIDI';
+    return;
+  }
+
+  navigator.requestMIDIAccess().then(function (access) {
+    var inputs = [];
+    access.inputs.forEach(function (inp) {
+      inputs.push(inp);
+    });
+
+    if (inputs.length === 0) {
+      statusLine.textContent = 'לא נמצאה מקלדת MIDI חיצונית';
+      return;
+    }
+
+    midiInputPort = inputs[0];
+    midiInputPort.onmidimessage = onMidiInputMessage;
+    midiInputEnabled = true;
+    midiInputBtn.classList.add('active');
+    statusLine.textContent = 'כניסת MIDI פעילה ✦ ' + (midiInputPort.name || 'מקלדת') + ' · נגנו עליי מבחוץ';
+  }).catch(function () {
+    statusLine.textContent = 'בקשת MIDI נדחתה';
+  });
 });
 
 var KEY_ROWS = {
