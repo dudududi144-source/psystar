@@ -48,6 +48,8 @@ SyncProtocol מגדיר הודעות presence/play/stop/grid/bpm/scene עם תפ
 - engine/voice-manager: הקצאת קולות, steal של הזנב, מניעת הצפה.
 - engine/effects-rack: תיאור אפקטים חסין-שינוי, סינון פעילים.
 - engine/foundation-adapter: המרה נקודתית של אירועים, הלוך ושוב.
+- engine/midi-driver: המרה לבייטי MIDI, מעקב תווים פעילים, panic.
+- engine/recorder: לכידת אירועי מסע, זמן יחסי, חילוץ ושחרור.
 - integration/foundation-bridge: צינור חי בין bus לעולם, עם מונים.
 - integration/device-registry: גילוי, heartbeat, prune.
 - integration/sync-protocol: הודעות, תפקידים, בחירת מוביל.
