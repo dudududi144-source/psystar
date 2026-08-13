@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 13 · שפת ההרמוניה · סולמות ואקורדים</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 14 · מנוע האבולוציה · מוטציה וטרנספורמציה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -508,6 +508,19 @@ select option { background: #12082b; color: #fff; }
     <button id="panicBtn" class="orb ghost" type="button">פאניקה ✕</button>
   </section>
 
+  <section class="rack">
+    <span class="rack-title">מעבדת האבולוציה · מוטציה וטרנספורמציה</span>
+    <div class="dial">
+      <label for="evolveRateRange">קצב מוטציה</label>
+      <input id="evolveRateRange" type="range" min="1" max="60" value="12"/>
+      <span id="evolveRateValue">12%</span>
+    </div>
+    <button id="evolveBtn" class="orb gold" type="button">אבולוציה 🧬</button>
+    <button id="rotateBtn" class="orb ghost" type="button">סיבוב ⟳</button>
+    <button id="invertBtn" class="orb ghost" type="button">היפוך</button>
+    <button id="retrogradeBtn" class="orb ghost" type="button">רטרוגרד</button>
+  </section>
+
   <section class="euclid-panel">
     <span class="rack-title">אלכימיית קצב · יוצר פעימות אוקלידי</span>
     <div id="euclidRows"></div>
@@ -542,7 +555,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">משטח אקורדים דיאטוני · סולמות · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מעבדת אבולוציה · אקורדים · סולמות · נשימה אנושית · Shift+קליק אקסנט · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2210,6 +2223,75 @@ p2pCopyBtn.addEventListener('click', function () {
     p2pSignalOut.select();
     statusLine.textContent = 'סמנו את האות והעתיקו ידנית';
   }
+});
+
+var evolveRateRange = document.getElementById('evolveRateRange');
+var evolveRateValueEl = document.getElementById('evolveRateValue');
+var evolveBtn = document.getElementById('evolveBtn');
+var rotateBtn = document.getElementById('rotateBtn');
+var invertBtn = document.getElementById('invertBtn');
+var retrogradeBtn = document.getElementById('retrogradeBtn');
+
+evolveRateRange.addEventListener('input', function () {
+  evolveRateValueEl.textContent = evolveRateRange.value + '%';
+});
+
+function applyEvolvedGrid(newGrid, message) {
+  pushGridHistory();
+  gridState = newGrid.map(function (row) { return row.slice(); });
+  refreshAllCells();
+  markActiveScene(-1);
+  markActivePreset(-1);
+  broadcastGrid();
+  statusLine.textContent = message;
+}
+
+evolveBtn.addEventListener('click', function () {
+  var rate = Number(evolveRateRange.value) / 100;
+  var snapshot = captureGridSnapshot();
+
+  var mutated = snapshot.map(function (row) {
+    return row.map(function (cell) {
+      return Math.random() < rate ? !cell : cell;
+    });
+  });
+
+  if (mutated.length > 0 && mutated[0].length > 0) {
+    mutated[0][0] = true;
+  }
+
+  applyEvolvedGrid(mutated, 'אבולוציה 🧬 הרשת עברה מוטציה בקצב ' + evolveRateRange.value + '%');
+});
+
+rotateBtn.addEventListener('click', function () {
+  var rotated = captureGridSnapshot().map(function (row) {
+    var n = row.length;
+    var out = [];
+
+    for (var i = 0; i < n; i++) {
+      out.push(row[(i - 1 + n) % n]);
+    }
+
+    return out;
+  });
+
+  applyEvolvedGrid(rotated, 'סיבוב ⟳ כל השורות זזו צעד אחד ימינה');
+});
+
+invertBtn.addEventListener('click', function () {
+  var inverted = captureGridSnapshot().map(function (row) {
+    return row.map(function (cell) { return !cell; });
+  });
+
+  applyEvolvedGrid(inverted, 'היפוך ✦ האור והצל התחלפו');
+});
+
+retrogradeBtn.addEventListener('click', function () {
+  var retro = captureGridSnapshot().map(function (row) {
+    return row.slice().reverse();
+  });
+
+  applyEvolvedGrid(retro, 'רטרוגרד ✦ הזמן נע אחורה');
 });
 
 var LIBRARY_KEY = 'psystar.library.v1';
