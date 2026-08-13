@@ -53,27 +53,34 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function numOrZero(value: unknown): number {
+  var n = Number(value);
+  return isNaN(n) ? 0 : n;
+}
+
 export function morphPresets(a: Preset, b: Preset, t: number): Preset {
   var clamped = Math.max(0, Math.min(1, t));
 
   var rows = a.rows.map(function (rowA, r) {
+    var rowB = Array.isArray(b.rows[r]) ? b.rows[r] : [];
+
     return rowA.map(function (cellA, c) {
       var va = cellA ? 1 : 0;
-      var vb = b.rows[r][c] ? 1 : 0;
+      var vb = rowB[c] ? 1 : 0;
       return lerp(va, vb, clamped) >= 0.5;
     });
   });
 
   var params: PresetParams = {
-    bpm: Math.round(lerp(a.params.bpm, b.params.bpm, clamped)),
-    swing: Math.round(lerp(a.params.swing, b.params.swing, clamped)),
-    intensity: Math.round(lerp(a.params.intensity, b.params.intensity, clamped)),
-    attack: Math.round(lerp(a.params.attack, b.params.attack, clamped)),
-    release: Math.round(lerp(a.params.release, b.params.release, clamped)),
-    crush: Math.round(lerp(a.params.crush, b.params.crush, clamped)),
-    phaser: Math.round(lerp(a.params.phaser, b.params.phaser, clamped)),
-    delay: Math.round(lerp(a.params.delay, b.params.delay, clamped)),
-    reverb: Math.round(lerp(a.params.reverb, b.params.reverb, clamped))
+    bpm: Math.round(lerp(numOrZero(a.params.bpm), numOrZero(b.params.bpm), clamped)),
+    swing: Math.round(lerp(numOrZero(a.params.swing), numOrZero(b.params.swing), clamped)),
+    intensity: Math.round(lerp(numOrZero(a.params.intensity), numOrZero(b.params.intensity), clamped)),
+    attack: Math.round(lerp(numOrZero(a.params.attack), numOrZero(b.params.attack), clamped)),
+    release: Math.round(lerp(numOrZero(a.params.release), numOrZero(b.params.release), clamped)),
+    crush: Math.round(lerp(numOrZero(a.params.crush), numOrZero(b.params.crush), clamped)),
+    phaser: Math.round(lerp(numOrZero(a.params.phaser), numOrZero(b.params.phaser), clamped)),
+    delay: Math.round(lerp(numOrZero(a.params.delay), numOrZero(b.params.delay), clamped)),
+    reverb: Math.round(lerp(numOrZero(a.params.reverb), numOrZero(b.params.reverb), clamped))
   };
 
   return { name: a.name + ' ⇄ ' + b.name, rows: rows, params: params };
