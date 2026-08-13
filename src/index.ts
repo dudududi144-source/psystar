@@ -9,6 +9,7 @@ export * from './domain/scene.ts';
 export * from './domain/song.ts';
 export * from './domain/euclidean.ts';
 export * from './domain/preset.ts';
+export * from './domain/journey.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
 export * from './engine/audio-driver.ts';
