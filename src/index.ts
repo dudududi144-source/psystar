@@ -16,6 +16,7 @@ export * from './domain/accent.ts';
 export * from './domain/harmony.ts';
 export * from './domain/evolution.ts';
 export * from './domain/pack.ts';
+export * from './domain/velocity.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
 export * from './engine/audio-driver.ts';
