@@ -2,12 +2,13 @@
 
 # ✦ PSYSTAR ✦ מכונת התודעה ✦
 
-**התקן מוזיקלי פסיכודלי מקצה לקצה — לב קצב, סינתזה, מסע ויזואלי, רשת משפחתית, נהגים אמיתיים, זיכרון מסעות וספריית חלומות במערכת קנונית אחת**
+**התקן מוזיקלי פסיכודלי מקצה לקצה — לב קצב, סינתזה, מסע ויזואלי, רשת משפחתית, נהגים אמיתיים, זיכרון מסעות, ספריית חלומות ומקדש נייד במערכת קנונית אחת**
 
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-8%2F8-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-9%2F9-ffd166?style=for-the-badge)
+![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![license](https://img.shields.io/badge/license-MIT-ffd166?style=for-the-badge)
 
 *שום דבר כאן לא מקרי. כל החלטה עברה Roast Gate. כל קוד נבדק. כל פיקסל נושם.*
@@ -25,9 +26,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - **Protocol** — השפה המשותפת: הודעות וקידוד.
 - **Engine** — הלב: תזמון, ADSR, ניהול קולות, ראק אפקטים, MIDI, הקלטה.
 - **Integration** — הגשר אל משפחת PSY: foundation-bridge, device-registry, sync-protocol.
-- **UI** — המסע: מצב, תצוגה, וקונסולת DMT חיה.
-
-הממשק (`web/index.html`) הוא **מסע DMT אינטראקטיבי**: קיילודוסקופ חי, מנדלה נושמת, טבעת ספקטרום, ארבעה ערוצי סינתזה, זיכרון פורטל, חלימה בין עולמות, אלכימיית קצב, סנכרון רב-מכשירי, הקלטת מסעות, יציאת MIDI, יומני מסע — וספריית חלומות שלמה.
+- **UI** — המסע: קונסולת DMT חיה, נגינה חיה, ומקדש PWA נייד.
 
 ## ✦ מה המכונה יודעת
 
@@ -45,6 +44,8 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
 - ספריית חלומות: slots עם שמות, קיבולת, persistence
+- נגינה חיה: מקשים 1-4 מנגנים ערוצים, A עד K מנגנים סולם
+- מקדש נייד: מתקין כאפליקציה, עובד אופליין
 
 ## ✦ עקרונות על
 
@@ -63,17 +64,17 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 למסע הוויזואלי: פתחו את `web/index.html` בדפדפן, לחצו **הפעלה**, והניחו לקיילודוסקוב לנשום.
 
-לספריית החלומות: תנו שם בשדה, לחצו **שמירת חלום ✧** — והסצנה כולה נשמרת בספרייה. **טעינת חלום** מחזירה אותה לחיים.
+לנגינה חיה: מקשים **1-4** יורים את ארבעת הקולות; מקשים **A עד K** מנגנים סולם פנטטוני עולה — דרך כל שרשרת האפקטים.
 
-לשיתוף יומנים: **יצוא יומן ⬇** מוריד את המסע כ-JSON; **יבוא יומן ⬆** טוען אותו בכל מכשיר, ואז **ניגון יומן ✦** מנגן אותו.
+להתקנה: פתחו בדפדפן, בחרו "Install / הוסף למסך הבית" — והמקדש עובד אופליין, כאפליקציה עצמאית.
 
 ## ✦ מבנה
 
 - `docs/` — ארכיטקטורה, roast, החלטות, בדיקות, עיצוב, אינטגרציה, מפת דרכים
 - `src/` — core · domain · protocol · engine · integration · ui
-- `tests/` — unit · domain · protocol · engine · integration · drivers · journey · library
+- `tests/` — unit · domain · protocol · engine · integration · drivers · journey · library · pwa
 - `scripts/` — check · manifest
-- `web/` — מסך ה-DMT האינטראקטיבי
+- `web/` — מסך ה-DMT, manifest, service worker, אייקוני מנדלה
 - `.github/` — CI
 
 ## ✦ פילוסופיית עיצוב
@@ -85,6 +86,6 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 
 <div align="center">
 
-**PSYSTAR — לא מכשיר. שער. צומת של רשת. כלי שמנגן עם כל החדר. מכונה שזוכרת. וספרייה של חלומות.**
+**PSYSTAR — לא מכשיר. שער. צומת. כלי. זיכרון. ספרייה. ומקדש בכיס.**
 
 </div>
