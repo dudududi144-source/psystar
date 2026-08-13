@@ -81,8 +81,15 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - שידור מעברי סצנה לעוקבים (רשת מקומית + P2P) + לכידה ליומן מסע ✔
 - תיקון ותיקון: תגית title תקועה על שלב 4 מאז שלב 4 — עודכנה לתמידית ✔
 
+## שלב 16 · אזרח ה-Foundation — הושלם ✔
+- קריאת CONTRACT_GAPS ו-FOUNDATION_STATUS — גילוי: protocol ו-device-sdk הם canonical candidates, transport עדיין לא ✔
+- foundation-protocol mirror — כל ששת סוגי MusicalEvent, ולידציה, codec, InMemoryChannel עם סמנטיקה מדויקת ✔
+- foundation-device mirror — חוזה PsyDevice המלא + PsystarDevice: יכולות, ניתוב אירועים, lifecycle ✔
+- שער Foundation בקונסולה — חיבור לערוץ, מניית אירועים חיה, פרסום beat/note מכל צעד מנוגן ✔
+- עמידה ב-Rule 0: אפס שינויים ב-foundation, המראות ב-PSYSTAR בלבד — מוכן כצרכן שני ל-Phase D של תוכנית הנדידה ✔
+
 ## אופק · מה הלאה
-- חיבור ישיר ל-psy-foundation ברגע ש-transport יתקנן
 - WebSocket bridge בין מכשירים רחוקים (מעבר לגשר P2P הידני)
 - עורך piano-roll גרפי עם עריכת velocity לצעד
 - ספריית מסעות משותפת לכל המשפחה
+- חיבור transport אמיתי ברגע ש-PSY4 MusicalTransport יתקנן ב-foundation
