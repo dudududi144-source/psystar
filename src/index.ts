@@ -32,6 +32,7 @@ export * from './engine/recorder.ts';
 export * from './engine/tap-tempo.ts';
 export * from './engine/midi-input-map.ts';
 export * from './engine/humanizer.ts';
+export * from './engine/wav-encoder.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
