@@ -13,6 +13,7 @@ export * from './domain/preset.ts';
 export * from './domain/journey.ts';
 export * from './domain/library.ts';
 export * from './domain/accent.ts';
+export * from './domain/harmony.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
 export * from './engine/audio-driver.ts';
