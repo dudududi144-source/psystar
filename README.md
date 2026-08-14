@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-32%2F32-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-34%2F34-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
