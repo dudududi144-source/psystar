@@ -55,5 +55,6 @@ test('scaleCc maps 0-127 onto the target range', () => {
   // scaleCc floors cc values (real cc messages are integers): 63.5 -> 63
   expect(scaleCc(63.5, 0, 100)).toBeCloseTo((63 / 127) * 100, 6);
   expect(scaleCc(200, 0, 100)).toBeCloseTo(100, 6);
-  expect(scaleCc(5, 100, 0)).toBeCloseTo(100 - (5 / 127) * 100, 6);
+  // the range is direction-agnostic: lo..hi always maps 0..127
+  expect(scaleCc(5, 100, 0)).toBeCloseTo((5 / 127) * 100, 6);
 });
