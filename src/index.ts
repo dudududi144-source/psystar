@@ -18,6 +18,7 @@ export * from './domain/evolution.ts';
 export * from './domain/pack.ts';
 export * from './domain/velocity.ts';
 export * from './domain/roll.ts';
+export * from './domain/groove.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
 export * from './engine/audio-driver.ts';
