@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 29 · המטרון · ספירת פתיחה ופעימות חיות</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 30 · שערי הסתברות · קצב גנרטיבי חי</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -692,7 +692,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מטרונום וספירת פתיחה · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1241,6 +1241,14 @@ ROWS.forEach(function (row, rowIndex) {
       }
 
       cell.addEventListener('click', function (event) {
+        if (event.altKey) {
+          pushGridHistory();
+          probabilityGrid[rowIndex][stepIndex] = nextProbTierLocal(probabilityGrid[rowIndex][stepIndex]);
+          refreshCell(rowIndex, stepIndex);
+          broadcastGrid();
+          return;
+        }
+
         if (event.shiftKey) {
           pushGridHistory();
           accentGrid[rowIndex][stepIndex] = !accentGrid[rowIndex][stepIndex];
@@ -1284,7 +1292,7 @@ function refreshCell(rowIndex, stepIndex) {
   }
 
   if (active) {
-    cell.style.opacity = String(0.4 + velocityGrid[rowIndex][stepIndex] * 0.6);
+    cell.style.opacity = String((0.4 + velocityGrid[rowIndex][stepIndex] * 0.6) * (0.35 + 0.65 * probabilityGrid[rowIndex][stepIndex]));
   } else {
     cell.style.opacity = '';
   }
@@ -1694,6 +1702,18 @@ function applyFollowerMessage(message) {
         buildRollPanel();
       }
 
+      var probabilityData = message.payload.probability;
+      if (Array.isArray(probabilityData) && probabilityData.length === ROWS.length) {
+        for (var ppr = 0; ppr < ROWS.length; ppr++) {
+          if (Array.isArray(probabilityData[ppr]) && probabilityData[ppr].length === 16) {
+            for (var ppc = 0; ppc < 16; ppc++) {
+              var pv = Number(probabilityData[ppr][ppc]);
+              probabilityGrid[ppr][ppc] = isNaN(pv) ? 1.0 : Math.max(0, Math.min(1, pv));
+            }
+          }
+        }
+      }
+
       refreshAllCells();
       markActiveScene(-1);
       markActivePreset(-1);
@@ -1733,8 +1753,8 @@ function updatePeerCount() {
 }
 
 function broadcastGrid() {
-  postSync('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll });
-  sendP2p('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll });
+  postSync('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid });
+  sendP2p('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid });
 }
 
 var euclidWrap = document.getElementById('euclidRows');
@@ -1866,6 +1886,7 @@ function triggerStepVoices(stepIndex, when) {
     sendMidiTrigger(r, stepIndex);
 
     if (humanShouldSkip(r)) continue;
+    if (!probabilityFire(probabilityGrid[r][stepIndex])) continue;
 
     var humanWhen = when + humanDrift();
     stepVelocity = humanVelocity(r, stepIndex);
@@ -4005,6 +4026,30 @@ function nextVelocityTierLocal(current) {
   return VELOCITY_TIERS[(idx + 1) % VELOCITY_TIERS.length];
 }
 
+var probabilityGrid = (function () {
+  var grid = [];
+  for (var pr = 0; pr < 4; pr++) {
+    var prow = [];
+    for (var pc = 0; pc < 16; pc++) prow.push(1.0);
+    grid.push(prow);
+  }
+  return grid;
+})();
+
+var PROB_TIERS = [1.0, 0.75, 0.5, 0.25];
+
+function nextProbTierLocal(current) {
+  var idx = PROB_TIERS.indexOf(current);
+  if (idx === -1) return PROB_TIERS[0];
+  return PROB_TIERS[(idx + 1) % PROB_TIERS.length];
+}
+
+function probabilityFire(p) {
+  if (p >= 1) return true;
+  if (p <= 0) return false;
+  return Math.random() < p;
+}
+
 var humanityAmount = 0;
 var stepVelocity = 1;
 
@@ -5143,6 +5188,7 @@ function captureSessionState() {
     velocity: velocityGrid.map(function (row) { return row.slice(); }),
     accents: accentGrid.map(function (row) { return row.slice(); }),
     roll: leadRoll.slice(),
+    probability: probabilityGrid.map(function (row) { return row.slice(); }),
     bpm: bpm,
     swing: swingPercent,
     intensity: intensity,
@@ -5193,6 +5239,17 @@ function restoreSessionState(snapshot) {
       var rv = Number(snapshot.roll[rli]);
       leadRoll[rli] = isNaN(rv) ? -1 : Math.max(-1, Math.min(11, Math.floor(rv)));
     }
+  }
+
+  if (Array.isArray(snapshot.probability) && snapshot.probability.length === 4) {
+    probabilityGrid = snapshot.probability.map(function (row) {
+      var out = [];
+      for (var pri = 0; pri < 16; pri++) {
+        var pvv = Number(Array.isArray(row) ? row[pri] : 1.0);
+        out.push(isNaN(pvv) ? 1.0 : Math.max(0, Math.min(1, pvv)));
+      }
+      return out;
+    });
   }
 
   if (Array.isArray(snapshot.velocity) && snapshot.velocity.length === 4) {
