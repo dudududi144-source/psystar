@@ -121,6 +121,12 @@ ADSR envelope, VoiceManager עם steal, Effects Rack חסין-שינוי, Song m
 - שרשרת אפקטים משוכפלת: פילטר מאסטר, delay עם פידבק, convolver reverb ✔
 - ייצוא psystar-journey.wav בהורדה ישירה ✔
 
+## שלב 22 · מקצבי יסוד — הושלם ✔
+- Groove domain — שישה מקצבים אוצרים: Four on the Floor, Breakbeat, Half-Time, Psytrance Gallop, Dub Step, Tribal ✔
+- שלושה מצבי מיזוג: החלפה, איחוד, חיתוך — עם אי-שינוי מלא של הרשת המקורית ✔
+- ולידציה, lookup לפי שם, וחישוב צפיפות ✔
+- בקונסולה: פאנל DNA קצבי עם בורר מקצב, בורר מצב, והחלה דרך היסטוריה ושידור ✔
+
 ## אופק · מה הלאה
 - WebSocket bridge בין מכשירים רחוקים (מעבר לגשר P2P הידני)
 - הרחבת המגילה מעבר ל-16 צעדים + עריכת משך תו
