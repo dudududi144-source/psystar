@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 35 · הארפג'יאטור · אקורדים בתנועה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 36 · MIDI מלא · מלודיה ואקורדים החוצה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -741,7 +741,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1941,7 +1941,10 @@ function triggerStepVoices(stepIndex, when) {
     stepVelocity = humanVelocity(r, stepIndex);
 
     if (ROWS[r].id === 'bass') voiceBass(stepIndex, humanWhen);
-    if (ROWS[r].id === 'lead') voiceLead(stepIndex, humanWhen);
+    if (ROWS[r].id === 'lead') {
+      voiceLead(stepIndex, humanWhen);
+      sendRollMidi(stepIndex, humanWhen);
+    }
     if (ROWS[r].id === 'pad') voicePad(stepIndex, humanWhen);
     if (ROWS[r].id === 'spark') voiceSpark(stepIndex, humanWhen);
   }
@@ -3363,6 +3366,7 @@ function playProgressionChord(notes) {
 
     for (var ai = 0; ai < arpSeq.length; ai++) {
       playArpNote(arpSeq[ai], when + ai * arpStepDur, arpStepDur * 0.9);
+      sendChordMidi([arpSeq[ai]], when + ai * arpStepDur, arpStepDur * 0.9);
     }
 
     energy = Math.min(1.5, energy + 0.3);
@@ -3395,6 +3399,7 @@ function playProgressionChord(notes) {
     osc.onended = releaseVoice;
   }
 
+  sendChordMidi(voiced, when, chordDur);
   energy = Math.min(1.5, energy + 0.3);
 }
 
@@ -3885,6 +3890,52 @@ function drawSpectrumBars() {
   }
 
   spectrumCtx.shadowBlur = 0;
+}
+
+function degreeToMidiLocal(degree) {
+  if (degree < 0) return null;
+
+  var intervals = HARMONY_SCALES[harmonyScaleType];
+
+  if (!intervals || degree >= intervals.length) return null;
+
+  return Math.max(0, Math.min(127, harmonyKey + intervals[degree]));
+}
+
+function sendRollMidi(stepIndex, when) {
+  if (!midiOutput) return;
+
+  var degree = leadRoll[stepIndex];
+
+  if (degree < 0) return;
+
+  var note = degreeToMidiLocal(degree);
+
+  if (note === null) return;
+
+  var midiNow = performance.now() + Math.max(0, (when - audioCtx.currentTime) * 1000);
+  var stepDurMs = (60 / bpm / 4) * 1000;
+
+  try {
+    midiOutput.send([0x91, note, 100], midiNow);
+    midiOutput.send([0x81, note, 0x40], midiNow + stepDurMs * 0.9);
+  } catch (err) {}
+}
+
+function sendChordMidi(notes, when, durSec) {
+  if (!midiOutput) return;
+
+  var midiNow = performance.now() + Math.max(0, (when - audioCtx.currentTime) * 1000);
+  var durMs = Math.max(60, durSec * 1000);
+
+  for (var ci = 0; ci < notes.length; ci++) {
+    var note = Math.max(0, Math.min(127, Math.round(notes[ci])));
+
+    try {
+      midiOutput.send([0x92, note, 90], midiNow);
+      midiOutput.send([0x82, note, 0x40], midiNow + durMs);
+    } catch (err) {}
+  }
 }
 
 var progVoicingSelect = document.getElementById('progVoicingSelect');
