@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 27 · יצוא שיר מלא · כל הסצנות לקובץ אחד</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 28 · זיכרון סשן · המכונה אף פעם לא מאבדת את העבודה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -508,6 +508,7 @@ select option { background: #12082b; color: #fff; }
     <select id="dreamSelect"></select>
     <button id="dreamLoadBtn" class="orb ghost" type="button">טעינת חלום</button>
     <button id="dreamDeleteBtn" class="orb ghost" type="button">מחיקה</button>
+    <button id="sessionResetBtn" class="orb ghost" type="button">איפוס מצב ↺</button>
   </section>
 
   <section class="rack">
@@ -682,7 +683,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">זיכרון סשן אוטומטי · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -5073,7 +5074,155 @@ function animationLoop(time) {
   requestAnimationFrame(animationLoop);
 }
 
-loadSceneFromLocal();
+var SESSION_KEY = 'psystar.session.v1';
+
+function captureSessionState() {
+  return {
+    version: 1,
+    grid: gridState.map(function (row) { return row.slice(); }),
+    velocity: velocityGrid.map(function (row) { return row.slice(); }),
+    accents: accentGrid.map(function (row) { return row.slice(); }),
+    roll: leadRoll.slice(),
+    bpm: bpm,
+    swing: swingPercent,
+    intensity: intensity,
+    attack: Math.round(attackTime * 1000),
+    release: Math.round(releaseTime * 1000),
+    crush: Number(crushRange.value),
+    phaser: Number(phaserRange.value),
+    delay: Number(delayRange.value),
+    reverb: Number(reverbRange.value),
+    harmonyKey: harmonyKey,
+    harmonyScale: harmonyScaleType,
+    songSteps: songSteps.map(function (st) {
+      return { sceneIndex: st.sceneIndex, bars: st.bars };
+    }),
+    songLoop: songLoop
+  };
+}
+
+function saveSessionNow() {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(captureSessionState()));
+  } catch (err) {}
+}
+
+function restoreSessionState(snapshot) {
+  setSlider(bpmRange, snapshot.bpm);
+  setSlider(swingRange, snapshot.swing);
+  setSlider(intensityRange, snapshot.intensity);
+  setSlider(attackRange, snapshot.attack);
+  setSlider(releaseRange, snapshot.release);
+  setSlider(crushRange, snapshot.crush);
+  setSlider(phaserRange, snapshot.phaser);
+  setSlider(delayRange, snapshot.delay);
+  setSlider(reverbRange, snapshot.reverb);
+
+  if (typeof snapshot.harmonyScale === 'string' && HARMONY_SCALES[snapshot.harmonyScale]) {
+    harmonyScaleType = snapshot.harmonyScale;
+    harmonyScaleSelect.value = snapshot.harmonyScale;
+  }
+
+  if (typeof snapshot.harmonyKey === 'number') {
+    harmonyKey = snapshot.harmonyKey;
+    harmonyKeySelect.value = String(((snapshot.harmonyKey % 12) + 12) % 12);
+  }
+
+  if (Array.isArray(snapshot.roll) && snapshot.roll.length === 16) {
+    for (var rli = 0; rli < 16; rli++) {
+      var rv = Number(snapshot.roll[rli]);
+      leadRoll[rli] = isNaN(rv) ? -1 : Math.max(-1, Math.min(11, Math.floor(rv)));
+    }
+  }
+
+  if (Array.isArray(snapshot.velocity) && snapshot.velocity.length === 4) {
+    velocityGrid = snapshot.velocity.map(function (row) {
+      var out = [];
+      for (var vi = 0; vi < 16; vi++) {
+        var vv = Number(Array.isArray(row) ? row[vi] : 1.0);
+        out.push(isNaN(vv) ? 1.0 : Math.max(0.1, Math.min(1.5, vv)));
+      }
+      return out;
+    });
+  }
+
+  if (Array.isArray(snapshot.accents) && snapshot.accents.length === 4) {
+    accentGrid = snapshot.accents.map(function (row) {
+      var out = [];
+      for (var ai = 0; ai < 16; ai++) {
+        out.push(Array.isArray(row) ? row[ai] === true : false);
+      }
+      return out;
+    });
+  }
+
+  if (Array.isArray(snapshot.grid) && snapshot.grid.length === 4) {
+    gridState = snapshot.grid.map(function (row) {
+      var out = [];
+      for (var gi = 0; gi < 16; gi++) {
+        var cell = Array.isArray(row) ? row[gi] : false;
+        out.push(cell === true || cell === 1);
+      }
+      return out;
+    });
+  }
+
+  if (Array.isArray(snapshot.songSteps)) {
+    var validSteps = [];
+
+    for (var si = 0; si < snapshot.songSteps.length; si++) {
+      var st = snapshot.songSteps[si];
+
+      if (st && typeof st.sceneIndex === 'number' && st.sceneIndex >= 0 && st.sceneIndex < SCENES.length &&
+          typeof st.bars === 'number' && st.bars > 0) {
+        validSteps.push({ sceneIndex: st.sceneIndex, bars: Math.min(16, Math.floor(st.bars)) });
+      }
+    }
+
+    songSteps = validSteps;
+    songLoop = snapshot.songLoop !== false;
+    songLoopCheck.checked = songLoop;
+    renderSongChain();
+  }
+
+  buildHarmonyChordPad();
+  buildRollPanel();
+  refreshAllCells();
+  statusLine.textContent = 'הסשן שוחזר ✦ כל מה שבנית מחכה לך';
+}
+
+function tryRestoreSession() {
+  try {
+    var raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+
+    var snapshot = JSON.parse(raw);
+
+    if (!snapshot || snapshot.version !== 1) return false;
+    if (!Array.isArray(snapshot.grid) || snapshot.grid.length !== 4) return false;
+
+    restoreSessionState(snapshot);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+document.getElementById('sessionResetBtn').addEventListener('click', function () {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('psystar.grid.v3');
+  } catch (err) {}
+
+  location.reload();
+});
+
+setInterval(saveSessionNow, 8000);
+window.addEventListener('beforeunload', saveSessionNow);
+
+if (!tryRestoreSession()) {
+  loadSceneFromLocal();
+}
 loadCustomFromStorage();
 rebuildPresetLibrary();
 rebuildMorphSelects();
