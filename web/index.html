@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 22 · מקצבי יסוד · DNA קצבי</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 23 · תמלול חי · נגינה נכתבת למגילה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -611,6 +611,7 @@ select option { background: #12082b; color: #fff; }
     <span class="rack-title">מגילת התווים · פיאנו-רול לערוץ הליד</span>
     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center;">
       <button id="rollClearBtn" class="orb ghost" type="button">ניקוי מגילה</button>
+    <button id="transcribeBtn" class="orb ghost" type="button">תמלול חי ●</button>
       <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">לחיצה מציבה תו · לחיצה שוב מסירה · הסולם נקבע בבורר ההרמוניה</span>
     </div>
     <div id="rollPanel" style="display: flex; flex-direction: column; gap: 3px; direction: ltr; margin-top: 8px;"></div>
@@ -642,7 +643,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מקצבי יסוד · יצוא WAV אמיתי · ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3060,6 +3061,64 @@ wavExportBtn.addEventListener('click', function () {
   renderJourneyToWav(bars);
 });
 
+var transcribeArmed = false;
+var transcribeCursor = 0;
+var transcribeBtn = document.getElementById('transcribeBtn');
+
+function pitchClassLocal(midiNote) {
+  return ((Math.floor(midiNote) % 12) + 12) % 12;
+}
+
+function nearestDegreeLocal(midiNote) {
+  var intervals = HARMONY_SCALES[harmonyScaleType];
+  var keyPc = harmonyKey % 12;
+  var notePc = pitchClassLocal(midiNote);
+  var best = 0;
+  var bestDist = 99;
+
+  for (var d = 0; d < intervals.length; d++) {
+    var degPc = (keyPc + intervals[d]) % 12;
+    var direct = Math.abs(notePc - degPc);
+    var dist = Math.min(direct, 12 - direct);
+
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = d;
+    }
+  }
+
+  return best;
+}
+
+function transcribeNote(midiNote) {
+  if (!transcribeArmed) return;
+
+  var degree = nearestDegreeLocal(midiNote);
+  var step = running ? Math.max(0, currentStep) : transcribeCursor;
+
+  if (!running) {
+    transcribeCursor = (transcribeCursor + 1) % 16;
+  }
+
+  pushGridHistory();
+  leadRoll[step] = degree;
+  buildRollPanel();
+  broadcastGrid();
+  statusLine.textContent = 'תמלול ✦ התו נכתב למגילה בצעד ' + (step + 1);
+}
+
+transcribeBtn.addEventListener('click', function () {
+  transcribeArmed = !transcribeArmed;
+  transcribeBtn.classList.toggle('active', transcribeArmed);
+
+  if (transcribeArmed) {
+    transcribeCursor = 0;
+    statusLine.textContent = 'תמלול חמוש ● נגנו במקלדת או ב-MIDI — התווים ייכתבו למגילה';
+  } else {
+    statusLine.textContent = 'התמלול נעצר ✦ המגילה נשמרת בזיכרון';
+  }
+});
+
 var CONSOLE_GROOVES = [
   {
     name: 'Four on the Floor',
@@ -3754,6 +3813,7 @@ function onMidiInputMessage(event) {
 
   if (type === 0x90 && velocity > 0) {
     playVoiceAtPitch(midiNoteToRow(note), note, velocity);
+    transcribeNote(note);
   }
 }
 
@@ -3861,6 +3921,7 @@ function livePlayNote(scaleIndex) {
 
   energy = Math.min(1.5, energy + 0.25);
   statusLine.textContent = 'נגינה חיה ✦ תו ' + (scaleIndex + 1);
+  transcribeNote(69 + semis);
 }
 
 window.addEventListener('keydown', function (e) {
