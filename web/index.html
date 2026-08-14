@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 34 · מיקומי אקורדים · סגור, פתוח, היפוכים</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 35 · הארפג'יאטור · אקורדים בתנועה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -699,6 +699,16 @@ select option { background: #12082b; color: #fff; }
         <option value="second">היפוך ב׳</option>
       </select>
     </div>
+    <div class="dial">
+      <label for="progArpSelect">ארפג׳יו</label>
+      <select id="progArpSelect">
+        <option value="block">בלוק</option>
+        <option value="up">למעלה</option>
+        <option value="down">למטה</option>
+        <option value="updown">הלוך-חזור</option>
+        <option value="random">אקראי</option>
+      </select>
+    </div>
     <button id="progToggleBtn" class="orb gold" type="button">נגינת מהלך ▶</button>
     <span id="progNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); direction: ltr; letter-spacing: 0.05em;"></span>
   </section>
@@ -731,7 +741,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3347,6 +3357,18 @@ function playProgressionChord(notes) {
   var chordDur = 16 * (60 / bpm / 4) * barsPerChord;
   var voiced = applyVoicingLocal(notes, progVoicingSelect.value);
 
+  if (progArpSelect.value !== 'block') {
+    var arpSeq = arpSequenceLocal(voiced, progArpSelect.value, 16);
+    var arpStepDur = 60 / bpm / 4;
+
+    for (var ai = 0; ai < arpSeq.length; ai++) {
+      playArpNote(arpSeq[ai], when + ai * arpStepDur, arpStepDur * 0.9);
+    }
+
+    energy = Math.min(1.5, energy + 0.3);
+    return;
+  }
+
   for (var ni = 0; ni < voiced.length; ni++) {
     if (!claimVoice()) return;
 
@@ -3866,6 +3888,64 @@ function drawSpectrumBars() {
 }
 
 var progVoicingSelect = document.getElementById('progVoicingSelect');
+var progArpSelect = document.getElementById('progArpSelect');
+
+function arpSequenceLocal(notes, mode, length) {
+  if (!Array.isArray(notes) || notes.length === 0) return [];
+
+  var n = Math.max(0, Math.floor(length));
+  var sorted = notes.slice().sort(function (a, b) { return a - b; });
+
+  if (mode === 'random') {
+    var out = [];
+
+    for (var i = 0; i < n; i++) {
+      out.push(sorted[Math.floor(Math.random() * sorted.length)]);
+    }
+
+    return out;
+  }
+
+  var base;
+
+  if (mode === 'down') {
+    base = sorted.slice().reverse();
+  } else if (mode === 'updown') {
+    base = sorted.concat(sorted.slice(1, sorted.length - 1).reverse());
+  } else {
+    base = sorted;
+  }
+
+  if (base.length === 0) return [];
+
+  var seq = [];
+
+  for (var j = 0; j < n; j++) {
+    seq.push(base[j % base.length]);
+  }
+
+  return seq;
+}
+
+function playArpNote(note, when, dur) {
+  if (!claimVoice()) return;
+
+  var osc = audioCtx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.value = midiToFreq(note);
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.12, when + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + Math.max(0.05, dur));
+
+  osc.connect(gain);
+  gain.connect(voiceBus);
+  gain.connect(delaySend);
+  osc.start(when);
+  osc.stop(when + dur + 0.1);
+  osc.onended = releaseVoice;
+}
 
 function applyVoicingLocal(notes, voicing) {
   if (!Array.isArray(notes) || notes.length === 0) return [];
