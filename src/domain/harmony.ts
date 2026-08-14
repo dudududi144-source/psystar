@@ -121,3 +121,13 @@ export function scaleNoteNames(rootMidi: number, scaleType: ScaleType): string[]
     return midiToNoteName(midi).name;
   });
 }
+
+
+export function progressionChordAt(progression: number[][], bar: number, barsPerChord: number): number[] {
+  if (!Array.isArray(progression) || progression.length === 0) return [];
+
+  var per = Math.max(1, Math.floor(barsPerChord));
+  var idx = Math.floor(Math.max(0, bar) / per) % progression.length;
+
+  return progression[idx];
+}
