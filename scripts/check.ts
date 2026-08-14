@@ -79,6 +79,7 @@ const requiredFiles = [
   'tests/groove.test.ts',
   'tests/probability.test.ts',
   'tests/variation.test.ts',
+  'tests/spectrum.test.ts',
   'tests/transcribe.test.ts',
   'tests/autopilot.test.ts',
   'tests/midi-clock.test.ts',
