@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 21 · יצוא מסע · אודיו אמיתי WAV</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 22 · מקצבי יסוד · DNA קצבי</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -570,6 +570,23 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">מקצבי יסוד · DNA קצבי</span>
+    <div class="dial">
+      <label for="grooveSelect">מקצב</label>
+      <select id="grooveSelect"></select>
+    </div>
+    <div class="dial">
+      <label for="grooveModeSelect">מצב</label>
+      <select id="grooveModeSelect">
+        <option value="replace">החלפה</option>
+        <option value="or">איחוד</option>
+        <option value="and">חיתוך</option>
+      </select>
+    </div>
+    <button id="grooveApplyBtn" class="orb gold" type="button">החלה על הרשת ✦</button>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">מעבדת האבולוציה · מוטציה וטרנספורמציה</span>
     <div class="dial">
       <label for="evolveRateRange">קצב מוטציה</label>
@@ -625,7 +642,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יצוא WAV אמיתי · ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מקצבי יסוד · יצוא WAV אמיתי · ביטול מלא לכל שכבה · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3041,6 +3058,117 @@ wavExportBtn.addEventListener('click', function () {
   var bars = Number(wavBarsSelect.value);
   statusLine.textContent = 'המסע מעובד ✦ ' + bars + ' תיבות בדרך...';
   renderJourneyToWav(bars);
+});
+
+var CONSOLE_GROOVES = [
+  {
+    name: 'Four on the Floor',
+    rows: [
+      [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+    ]
+  },
+  {
+    name: 'Breakbeat',
+    rows: [
+      [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1]
+    ]
+  },
+  {
+    name: 'Half-Time',
+    rows: [
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+    ]
+  },
+  {
+    name: 'Psytrance Gallop',
+    rows: [
+      [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+    ]
+  },
+  {
+    name: 'Dub Step',
+    rows: [
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1]
+    ]
+  },
+  {
+    name: 'Tribal',
+    rows: [
+      [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1]
+    ]
+  }
+];
+
+var grooveSelect = document.getElementById('grooveSelect');
+var grooveModeSelect = document.getElementById('grooveModeSelect');
+var grooveApplyBtn = document.getElementById('grooveApplyBtn');
+
+(function buildGrooveSelect() {
+  CONSOLE_GROOVES.forEach(function (groove) {
+    var opt = document.createElement('option');
+    opt.value = groove.name;
+    opt.textContent = groove.name;
+    grooveSelect.appendChild(opt);
+  });
+})();
+
+grooveApplyBtn.addEventListener('click', function () {
+  var chosen = null;
+
+  for (var gi = 0; gi < CONSOLE_GROOVES.length; gi++) {
+    if (CONSOLE_GROOVES[gi].name === grooveSelect.value) {
+      chosen = CONSOLE_GROOVES[gi];
+      break;
+    }
+  }
+
+  if (!chosen) {
+    statusLine.textContent = 'בחרו מקצב קודם';
+    return;
+  }
+
+  var mode = grooveModeSelect.value;
+
+  pushGridHistory();
+
+  var merged = chosen.rows.map(function (grooveRow, r) {
+    return grooveRow.map(function (grooveCell, c) {
+      var grooveBit = grooveCell === 1;
+      var currentBit = gridState[r][c] === true;
+
+      if (mode === 'or') return currentBit || grooveBit;
+      if (mode === 'and') return currentBit && grooveBit;
+
+      return grooveBit;
+    });
+  });
+
+  gridState = merged;
+  refreshAllCells();
+  markActiveScene(-1);
+  markActivePreset(-1);
+  broadcastGrid();
+
+  var modeLabel = mode === 'or' ? 'אוחדה עם' : mode === 'and' ? 'נחתכה עם' : 'הוחלפה ב';
+  statusLine.textContent = 'הרשת ' + modeLabel + ' המקצב ' + chosen.name + ' ✦';
 });
 
 var LIBRARY_KEY = 'psystar.library.v1';
