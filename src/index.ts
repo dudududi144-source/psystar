@@ -51,4 +51,5 @@ export * from './integration/foundation-device.ts';
 export * from './integration/p2p-signaling.ts';
 export * from './ui/state.ts';
 export * from './ui/render.ts';
+export * from './ui/spectrum.ts';
 export * from './app.ts';
