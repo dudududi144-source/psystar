@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 28 · זיכרון סשן · המכונה אף פעם לא מאבדת את העבודה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 29 · המטרון · ספירת פתיחה ופעימות חיות</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -358,6 +358,15 @@ select option { background: #12082b; color: #fff; }
     </div>
 
     <button id="dmtBtn" class="orb" type="button">מצב DMT</button>
+    <button id="metronomeBtn" class="orb ghost" type="button">מטרונום ♩</button>
+    <div class="dial">
+      <label for="countInSelect">ספירה</label>
+      <select id="countInSelect">
+        <option value="0">ללא</option>
+        <option value="1">תיבה 1</option>
+        <option value="2">2 תיבות</option>
+      </select>
+    </div>
     <button id="tapBtn" class="orb gold" type="button">טאפ קצב ◉</button>
   </section>
 
@@ -683,7 +692,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">זיכרון סשן אוטומטי · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מטרונום וספירת פתיחה · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1915,6 +1924,24 @@ function scheduleLoop() {
     }
 
     var playTime = nextStepTime + swingOffset;
+
+    if (countInRemaining > 0) {
+      var countDone = countInTotal - countInRemaining;
+      countInRemaining--;
+
+      if (countDone % 4 === 0) {
+        playMetronomeClick(playTime, countDone % 16 === 0 ? 1760 : 880);
+      }
+
+      sendMidiClockForStep(playTime);
+      nextStepTime += secondsPerStep();
+      continue;
+    }
+
+    if (metronomeActive && nextStep % 4 === 0) {
+      playMetronomeClick(playTime, nextStep % 16 === 0 ? 1760 : 880);
+    }
+
     var anyActive = triggerStepVoices(nextStep, playTime);
     sendMidiClockForStep(playTime);
     foundPublishStep(nextStep);
@@ -1946,6 +1973,8 @@ function startEngine() {
   progSteps = 0;
   autopilotSteps = 0;
   foundStepCounter = 0;
+  countInTotal = (Number(countInSelect.value) || 0) * 16;
+  countInRemaining = countInTotal;
 
   if (songMode) {
     stepsPlayed = 0;
@@ -1963,6 +1992,8 @@ function startEngine() {
 
 function stopEngine() {
   running = false;
+  countInRemaining = 0;
+  countInTotal = 0;
 
   if (arrangerActive) {
     arrangerActive = false;
@@ -3486,6 +3517,35 @@ midiClockBtn.addEventListener('click', function () {
   midiClockActive = true;
   midiClockBtn.classList.add('active');
   statusLine.textContent = 'שעון MIDI פעיל ⏱ 24 פעימות לרבע · הציוד החיצוני ילך אחרי PSYSTAR';
+});
+
+var metronomeActive = false;
+var countInRemaining = 0;
+var countInTotal = 0;
+
+var metronomeBtn = document.getElementById('metronomeBtn');
+var countInSelect = document.getElementById('countInSelect');
+
+function playMetronomeClick(when, freq) {
+  var osc = audioCtx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.value = freq;
+
+  var gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(0.25, when + 0.002);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.06);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(when);
+  osc.stop(when + 0.08);
+}
+
+metronomeBtn.addEventListener('click', function () {
+  metronomeActive = !metronomeActive;
+  metronomeBtn.classList.toggle('active', metronomeActive);
+  statusLine.textContent = metronomeActive ? 'מטרונום פעיל ♩ הפעימות יישמעו במהלך הנגינה' : 'המטרונום נדם';
 });
 
 var CONSOLE_GROOVES = [
