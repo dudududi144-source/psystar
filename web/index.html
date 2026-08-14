@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 26 · שעון MIDI · המכונה מנצחת את הסטודיו</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 27 · יצוא שיר מלא · כל הסצנות לקובץ אחד</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -546,6 +546,13 @@ select option { background: #12082b; color: #fff; }
       <label for="wavBarsSelect">תיבות</label>
       <select id="wavBarsSelect"></select>
     </div>
+    <div class="dial">
+      <label for="wavSourceSelect">מקור</label>
+      <select id="wavSourceSelect">
+        <option value="grid">הרשת הנוכחית</option>
+        <option value="song">השיר המלא</option>
+      </select>
+    </div>
     <button id="wavExportBtn" class="orb gold" type="button">עיבוד והורדה ⬇</button>
     <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
   </section>
@@ -675,7 +682,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2826,6 +2833,7 @@ function foundPublishStep(stepIndex) {
 }
 
 var wavBarsSelect = document.getElementById('wavBarsSelect');
+var wavSourceSelect = document.getElementById('wavSourceSelect');
 var wavExportBtn = document.getElementById('wavExportBtn');
 
 (function buildWavSelectors() {
@@ -2950,14 +2958,58 @@ function offSpark(octx, dest, stepIdx, when, vel) {
   osc.stop(when + tail + 0.1);
 }
 
-function renderJourneyToWav(bars) {
+function totalSegmentStepsLocal(segments) {
+  var total = 0;
+
+  for (var i = 0; i < segments.length; i++) {
+    total += segments[i].bars * 16;
+  }
+
+  return total;
+}
+
+function gridAtStepLocal(segments, stepIndex) {
+  var remaining = Math.max(0, Math.floor(stepIndex));
+
+  for (var i = 0; i < segments.length; i++) {
+    var segSteps = segments[i].bars * 16;
+
+    if (remaining < segSteps) return segments[i].grid;
+
+    remaining -= segSteps;
+  }
+
+  return null;
+}
+
+function renderJourneyToWav(bars, source) {
   if (typeof OfflineAudioContext === 'undefined') {
     statusLine.textContent = 'הדפדפן לא תומך בעיבוד אופליין';
     return;
   }
 
   var stepDur = 60 / bpm / 4;
-  var totalSteps = bars * 16;
+
+  var segments = null;
+
+  if (source === 'song') {
+    segments = [];
+
+    for (var si = 0; si < songSteps.length; si++) {
+      var songStep = songSteps[si];
+
+      if (SCENES[songStep.sceneIndex]) {
+        segments.push({ grid: SCENES[songStep.sceneIndex].rows, bars: Math.max(1, Math.floor(songStep.bars)) });
+      }
+    }
+
+    if (segments.length === 0) {
+      statusLine.textContent = 'השיר ריק ✦ הוסיפו סצנות לעורך השירים לפני יצוא שיר מלא';
+      return;
+    }
+  }
+
+  var totalSteps = segments ? totalSegmentStepsLocal(segments) : bars * 16;
   var tail = 3;
   var duration = totalSteps * stepDur + tail;
   var sampleRate = 44100;
@@ -3008,9 +3060,12 @@ function renderJourneyToWav(bars) {
   for (var s = 0; s < totalSteps; s++) {
     var stepTime = 0.05 + s * stepDur;
     var stepIdx = s % 16;
+    var activeGrid = segments ? gridAtStepLocal(segments, s) : gridState;
+
+    if (!activeGrid) continue;
 
     for (var r = 0; r < ROWS.length; r++) {
-      if (!gridState[r][stepIdx]) continue;
+      if (!activeGrid[r][stepIdx]) continue;
 
       if (r !== 0 && humanityAmount > 0.5 && rand() < (humanityAmount - 0.5) * 0.3) continue;
 
@@ -3096,8 +3151,13 @@ function encodeWavLocal(buffer) {
 
 wavExportBtn.addEventListener('click', function () {
   var bars = Number(wavBarsSelect.value);
-  statusLine.textContent = 'המסע מעובד ✦ ' + bars + ' תיבות בדרך...';
-  renderJourneyToWav(bars);
+  var source = wavSourceSelect.value;
+
+  statusLine.textContent = source === 'song'
+    ? 'השיר המלא מעובד ✦ ' + songSteps.length + ' חלקים בדרך...'
+    : 'המסע מעובד ✦ ' + bars + ' תיבות בדרך...';
+
+  renderJourneyToWav(bars, source);
 });
 
 var transcribeArmed = false;
