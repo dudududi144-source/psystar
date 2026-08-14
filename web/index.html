@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 23 · תמלול חי · נגינה נכתבת למגילה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 24 · מהלך הרמוני · תנועת אקורדים חיה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -618,6 +618,23 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">מהלך הרמוני · תנועת אקורדים</span>
+    <div class="dial">
+      <label for="progSelect">מהלך</label>
+      <select id="progSelect"></select>
+    </div>
+    <div class="dial">
+      <label for="progBarsSelect">תיבות לאקורד</label>
+      <select id="progBarsSelect">
+        <option value="1">1</option>
+        <option value="2">2</option>
+      </select>
+    </div>
+    <button id="progToggleBtn" class="orb gold" type="button">נגינת מהלך ▶</button>
+    <span id="progNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); direction: ltr; letter-spacing: 0.05em;"></span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">שפת ההרמוניה · סולם ומשטח אקורדים</span>
     <div class="dial">
       <label for="harmonyKeySelect">שורש</label>
@@ -643,7 +660,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מהלך הרמוני חי · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1880,6 +1897,7 @@ function scheduleLoop() {
     visualQueue.push({ step: nextStep, time: playTime, active: anyActive });
     advanceSongIfNeeded();
     arrangerTick();
+    progressionTick();
 
     nextStep = (nextStep + 1) % STEPS;
     nextStepTime += secondsPerStep();
@@ -1900,6 +1918,7 @@ function startEngine() {
   visualQueue = [];
   currentStep = -1;
   arrangerSteps = 0;
+  progSteps = 0;
   foundStepCounter = 0;
 
   if (songMode) {
@@ -3116,6 +3135,113 @@ transcribeBtn.addEventListener('click', function () {
     statusLine.textContent = 'תמלול חמוש ● נגנו במקלדת או ב-MIDI — התווים ייכתבו למגילה';
   } else {
     statusLine.textContent = 'התמלול נעצר ✦ המגילה נשמרת בזיכרון';
+  }
+});
+
+var CONSOLE_PROGRESSIONS = {
+  'I-IV-V-I': [1, 4, 5, 1],
+  'I-V-vi-IV': [1, 5, 6, 4],
+  'ii-V-I': [2, 5, 1],
+  'i-VI-III-VII': [1, 6, 3, 7],
+  '12-bar': [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5]
+};
+
+var progActive = false;
+var progSteps = 0;
+
+var progSelect = document.getElementById('progSelect');
+var progBarsSelect = document.getElementById('progBarsSelect');
+var progToggleBtn = document.getElementById('progToggleBtn');
+var progNowEl = document.getElementById('progNow');
+
+(function buildProgSelect() {
+  for (var progName in CONSOLE_PROGRESSIONS) {
+    var opt = document.createElement('option');
+    opt.value = progName;
+    opt.textContent = progName;
+    progSelect.appendChild(opt);
+  }
+})();
+
+function progressionChordAtLocal(degrees, bar, barsPerChord) {
+  var per = Math.max(1, barsPerChord);
+  var idx = Math.floor(Math.max(0, bar) / per) % degrees.length;
+  return degrees[idx];
+}
+
+function playProgressionChord(notes) {
+  var when = audioCtx.currentTime + 0.02;
+  var barsPerChord = Number(progBarsSelect.value) || 1;
+  var chordDur = 16 * (60 / bpm / 4) * barsPerChord;
+
+  for (var ni = 0; ni < notes.length; ni++) {
+    if (!claimVoice()) return;
+
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = midiToFreq(notes[ni]);
+
+    var filt = audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = 800;
+
+    var gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(0.07, when + 0.15);
+    gain.gain.setValueAtTime(0.07, when + Math.max(0.2, chordDur - 0.3));
+    gain.gain.exponentialRampToValueAtTime(0.001, when + chordDur);
+
+    osc.connect(filt);
+    filt.connect(gain);
+    gain.connect(voiceBus);
+    gain.connect(reverbSend);
+    osc.start(when);
+    osc.stop(when + chordDur + 0.05);
+    osc.onended = releaseVoice;
+  }
+
+  energy = Math.min(1.5, energy + 0.3);
+}
+
+function progressionTick() {
+  if (!progActive) return;
+  if (syncRole === 'follower') return;
+  if (p2pRole === 'guest') return;
+
+  progSteps++;
+
+  if (progSteps % 16 !== 0) return;
+
+  var bar = Math.floor(progSteps / 16) - 1;
+  var degrees = CONSOLE_PROGRESSIONS[progSelect.value];
+
+  if (!degrees || degrees.length === 0) return;
+
+  var barsPerChord = Number(progBarsSelect.value) || 1;
+  var degree = progressionChordAtLocal(degrees, bar, barsPerChord);
+  var chord = harmonyDiatonicChord(harmonyKey, harmonyScaleType, degree);
+
+  playProgressionChord(chord);
+
+  progNowEl.textContent = progSelect.value + ' · ' + chord.map(function (n) {
+    return harmonyNoteName(n);
+  }).join('-');
+}
+
+progToggleBtn.addEventListener('click', function () {
+  progActive = !progActive;
+  progToggleBtn.classList.toggle('active', progActive);
+
+  if (progActive) {
+    progSteps = 0;
+    progNowEl.textContent = progSelect.value;
+
+    if (!running) startEngine();
+
+    statusLine.textContent = 'המהלך ההרמוני פעיל ✦ ' + progSelect.value + ' בתוך ' + (harmonyNoteName(harmonyKey % 12)) + ' ' + HARMONY_SCALE_LABELS[harmonyScaleType];
+  } else {
+    progNowEl.textContent = '';
+    statusLine.textContent = 'המהלך ההרמוני נעצר ✦ השקט חוזר';
   }
 });
 
