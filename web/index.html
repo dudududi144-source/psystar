@@ -319,6 +319,14 @@ select option { background: #12082b; color: #fff; }
 }
 
 .p2p-area:focus { outline: 1px solid var(--cyan); }
+.spectrum {
+  width: 100%;
+  height: 90px;
+  margin-top: 12px;
+  border-radius: 16px;
+  background: rgba(5, 2, 15, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 </style>
 </head>
 <body>
@@ -332,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 32 · שליטת חומרה · למידת MIDI CC</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 33 · מנתח הספקטרום · הצליל נראה לעין</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -710,9 +718,11 @@ select option { background: #12082b; color: #fff; }
     <div id="lightTrack" class="track"></div>
   </div>
 
+  <canvas id="spectrumCanvas" class="spectrum" width="1024" height="90"></canvas>
+
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3767,6 +3777,84 @@ ccClearBtn.addEventListener('click', function () {
 loadCcMap();
 renderCcMappings();
 
+var spectrumCanvasEl = document.getElementById('spectrumCanvas');
+var spectrumCtx = spectrumCanvasEl.getContext('2d');
+var smoothedBars = [];
+var SPECTRUM_BARS = 48;
+
+function spectrumBarsLocal(startBin) {
+  var bars = [];
+
+  for (var i = 0; i < SPECTRUM_BARS; i++) {
+    var bin = startBin + i;
+    var v = bin < freqData.length ? freqData[bin] : 0;
+
+    bars.push(Math.max(0, Math.min(1, v / 255)));
+  }
+
+  return bars;
+}
+
+function smoothSpectrumLocal(current, next, alpha) {
+  var out = [];
+
+  for (var i = 0; i < next.length; i++) {
+    var c = i < current.length ? current[i] : 0;
+
+    out.push(c + (next[i] - c) * alpha);
+  }
+
+  return out;
+}
+
+function barHue(i) {
+  var t = i / (SPECTRUM_BARS - 1);
+
+  if (t < 0.5) return 300 - t * 2 * 120;
+
+  return 180 - (t - 0.5) * 2 * 135;
+}
+
+function drawSpectrumBars() {
+  if (!analyser || !freqData) return;
+
+  var w = spectrumCanvasEl.width;
+  var h = spectrumCanvasEl.height;
+
+  spectrumCtx.clearRect(0, 0, w, h);
+
+  var raw = spectrumBarsLocal(2);
+  smoothedBars = smoothSpectrumLocal(smoothedBars, raw, running ? 0.35 : 0.12);
+
+  var gap = 3;
+  var barW = (w - gap * (SPECTRUM_BARS - 1)) / SPECTRUM_BARS;
+
+  for (var i = 0; i < SPECTRUM_BARS; i++) {
+    var v = smoothedBars[i];
+    var barH = Math.max(2, v * (h - 14));
+    var x = i * (barW + gap);
+    var y = h - 4 - barH;
+    var hue = barHue(i);
+
+    spectrumCtx.fillStyle = 'hsla(' + hue + ', 100%, 62%, ' + (0.25 + v * 0.75) + ')';
+
+    if (v > 0.72) {
+      spectrumCtx.shadowBlur = 12;
+      spectrumCtx.shadowColor = 'hsla(' + hue + ', 100%, 65%, 0.9)';
+    } else {
+      spectrumCtx.shadowBlur = 0;
+    }
+
+    spectrumCtx.fillRect(x, y, barW, barH);
+
+    spectrumCtx.shadowBlur = 0;
+    spectrumCtx.fillStyle = 'hsla(' + hue + ', 100%, 80%, ' + Math.min(1, 0.3 + v) + ')';
+    spectrumCtx.fillRect(x, y - 3, barW, 2);
+  }
+
+  spectrumCtx.shadowBlur = 0;
+}
+
 var CONSOLE_GROOVES = [
   {
     name: 'Four on the Floor',
@@ -5378,6 +5466,7 @@ function drawSpectrum(time) {
 function animationLoop(time) {
   drawCosmos(time);
   drawSpectrum(time);
+  drawSpectrumBars();
   voiceLine.textContent = activeVoices + ' קולות פעילים ✦ תקרה ' + MAX_VOICES;
   requestAnimationFrame(animationLoop);
 }
