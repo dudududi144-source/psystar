@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 30 · שערי הסתברות · קצב גנרטיבי חי</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 31 · וריאציות · הופעה חיה בלחיצה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -602,6 +602,15 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">וריאציות · הופעה חיה</span>
+    <button id="varBtn0" class="scene-btn" type="button">A</button>
+    <button id="varBtn1" class="scene-btn" type="button">B</button>
+    <button id="varBtn2" class="scene-btn" type="button">C</button>
+    <button id="varBtn3" class="scene-btn" type="button">D</button>
+    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.05em;">קליק = טעינה · Shift+קליק = לכידה · Alt+קליק = ניקוי</span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">מקצבי יסוד · DNA קצבי</span>
     <div class="dial">
       <label for="grooveSelect">מקצב</label>
@@ -692,7 +701,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3569,6 +3578,58 @@ metronomeBtn.addEventListener('click', function () {
   statusLine.textContent = metronomeActive ? 'מטרונום פעיל ♩ הפעימות יישמעו במהלך הנגינה' : 'המטרונום נדם';
 });
 
+var VARIATION_LABELS = ['A', 'B', 'C', 'D'];
+var variationSlots = [null, null, null, null];
+var variationBtns = [
+  document.getElementById('varBtn0'),
+  document.getElementById('varBtn1'),
+  document.getElementById('varBtn2'),
+  document.getElementById('varBtn3')
+];
+
+function refreshVariationBtns() {
+  for (var vi = 0; vi < variationBtns.length; vi++) {
+    if (variationSlots[vi]) {
+      variationBtns[vi].classList.add('active');
+    } else {
+      variationBtns[vi].classList.remove('active');
+    }
+  }
+}
+
+variationBtns.forEach(function (btn, idx) {
+  btn.addEventListener('click', function (event) {
+    if (event.shiftKey) {
+      variationSlots[idx] = gridState.map(function (row) { return row.slice(); });
+      refreshVariationBtns();
+      statusLine.textContent = 'וריאציה ' + VARIATION_LABELS[idx] + ' נלכדה ✦ הרגע נשמר';
+      return;
+    }
+
+    if (event.altKey) {
+      if (variationSlots[idx]) {
+        variationSlots[idx] = null;
+        refreshVariationBtns();
+        statusLine.textContent = 'וריאציה ' + VARIATION_LABELS[idx] + ' נמחקה';
+      }
+      return;
+    }
+
+    if (!variationSlots[idx]) {
+      statusLine.textContent = 'וריאציה ' + VARIATION_LABELS[idx] + ' ריקה ✦ לכדו אותה עם Shift+קליק';
+      return;
+    }
+
+    pushGridHistory();
+    gridState = variationSlots[idx].map(function (row) { return row.slice(); });
+    refreshAllCells();
+    markActiveScene(-1);
+    markActivePreset(-1);
+    broadcastGrid();
+    statusLine.textContent = 'וריאציה ' + VARIATION_LABELS[idx] + ' נטענה ✦';
+  });
+});
+
 var CONSOLE_GROOVES = [
   {
     name: 'Four on the Floor',
@@ -5189,6 +5250,7 @@ function captureSessionState() {
     accents: accentGrid.map(function (row) { return row.slice(); }),
     roll: leadRoll.slice(),
     probability: probabilityGrid.map(function (row) { return row.slice(); }),
+    variations: variationSlots.slice(),
     bpm: bpm,
     swing: swingPercent,
     intensity: intensity,
@@ -5250,6 +5312,19 @@ function restoreSessionState(snapshot) {
       }
       return out;
     });
+  }
+
+  if (Array.isArray(snapshot.variations) && snapshot.variations.length === 4) {
+    variationSlots = snapshot.variations.map(function (slot) {
+      if (!Array.isArray(slot)) return null;
+
+      return slot.map(function (row) {
+        if (!Array.isArray(row)) return [];
+
+        return row.map(function (cell) { return cell === true || cell === 1; });
+      });
+    });
+    refreshVariationBtns();
   }
 
   if (Array.isArray(snapshot.velocity) && snapshot.velocity.length === 4) {
