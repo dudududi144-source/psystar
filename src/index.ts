@@ -38,6 +38,7 @@ export * from './engine/transcribe.ts';
 export * from './engine/autopilot.ts';
 export * from './engine/midi-clock.ts';
 export * from './engine/song-render.ts';
+export * from './engine/session.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
