@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 25 · טייס אוטומטי · המכונה מנגנת את עצמה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 26 · שעון MIDI · המכונה מנצחת את הסטודיו</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -566,6 +566,7 @@ select option { background: #12082b; color: #fff; }
     <span class="rack-title">נהגים אמיתיים · הקלטה ו-MIDI</span>
     <button id="recordBtn" class="orb ghost" type="button">הקלטת מסע ●</button>
     <button id="midiBtn" class="orb ghost" type="button">יציאת MIDI</button>
+    <button id="midiClockBtn" class="orb ghost" type="button">שעון MIDI ⏱</button>
     <button id="panicBtn" class="orb ghost" type="button">פאניקה ✕</button>
   </section>
 
@@ -674,7 +675,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1907,6 +1908,7 @@ function scheduleLoop() {
 
     var playTime = nextStepTime + swingOffset;
     var anyActive = triggerStepVoices(nextStep, playTime);
+    sendMidiClockForStep(playTime);
     foundPublishStep(nextStep);
     visualQueue.push({ step: nextStep, time: playTime, active: anyActive });
     advanceSongIfNeeded();
@@ -1947,6 +1949,7 @@ function startEngine() {
   playBtn.classList.add('active');
   postSync('play', { bpm: bpm });
   sendP2p('play', { bpm: bpm });
+  sendMidiRealtime(250);
   statusLine.textContent = 'המסע החל ✦ תזמון lookahead חי בקצב ' + bpm + ' BPM';
 }
 
@@ -1964,6 +1967,7 @@ function stopEngine() {
   clearLights();
   postSync('stop', {});
   sendP2p('stop', {});
+  sendMidiRealtime(252);
   statusLine.textContent = 'המכונה נחה ✦ הקיילודוסקוב עדיין זוכר אותך.';
 }
 
@@ -3378,6 +3382,49 @@ autopilotToggleBtn.addEventListener('click', function () {
     autopilotNowEl.textContent = '';
     statusLine.textContent = 'הטייס נחת ✦ השליטה חזרה לידיים שלך';
   }
+});
+
+var midiClockActive = false;
+var midiClockBtn = document.getElementById('midiClockBtn');
+
+function sendMidiClockForStep(stepTimeSec) {
+  if (!midiClockActive || !midiOutput || !audioCtx) return;
+
+  var stepDurMs = (60 / bpm / 4) * 1000;
+  var base = performance.now() + Math.max(0, (stepTimeSec - audioCtx.currentTime) * 1000);
+  var perPulse = stepDurMs / 6;
+
+  for (var pi = 0; pi < 6; pi++) {
+    try {
+      midiOutput.send([248], base + pi * perPulse);
+    } catch (err) {}
+  }
+}
+
+function sendMidiRealtime(byte) {
+  if (!midiClockActive || !midiOutput) return;
+
+  try {
+    midiOutput.send([byte]);
+  } catch (err) {}
+}
+
+midiClockBtn.addEventListener('click', function () {
+  if (midiClockActive) {
+    midiClockActive = false;
+    midiClockBtn.classList.remove('active');
+    statusLine.textContent = 'שעון MIDI נעצר ✦ הציוד החיצוני שוחרר';
+    return;
+  }
+
+  if (!midiOutput) {
+    statusLine.textContent = 'הפעילו קודם יציאת MIDI ✦ ואז את השעון';
+    return;
+  }
+
+  midiClockActive = true;
+  midiClockBtn.classList.add('active');
+  statusLine.textContent = 'שעון MIDI פעיל ⏱ 24 פעימות לרבע · הציוד החיצוני ילך אחרי PSYSTAR';
 });
 
 var CONSOLE_GROOVES = [
