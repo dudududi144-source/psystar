@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 33 · מנתח הספקטרום · הצליל נראה לעין</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 34 · מיקומי אקורדים · סגור, פתוח, היפוכים</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -690,6 +690,15 @@ select option { background: #12082b; color: #fff; }
         <option value="2">2</option>
       </select>
     </div>
+    <div class="dial">
+      <label for="progVoicingSelect">מיקום</label>
+      <select id="progVoicingSelect">
+        <option value="closed">סגור</option>
+        <option value="open">פתוח</option>
+        <option value="first">היפוך א׳</option>
+        <option value="second">היפוך ב׳</option>
+      </select>
+    </div>
     <button id="progToggleBtn" class="orb gold" type="button">נגינת מהלך ▶</button>
     <span id="progNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); direction: ltr; letter-spacing: 0.05em;"></span>
   </section>
@@ -722,7 +731,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3336,13 +3345,14 @@ function playProgressionChord(notes) {
   var when = audioCtx.currentTime + 0.02;
   var barsPerChord = Number(progBarsSelect.value) || 1;
   var chordDur = 16 * (60 / bpm / 4) * barsPerChord;
+  var voiced = applyVoicingLocal(notes, progVoicingSelect.value);
 
-  for (var ni = 0; ni < notes.length; ni++) {
+  for (var ni = 0; ni < voiced.length; ni++) {
     if (!claimVoice()) return;
 
     var osc = audioCtx.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.value = midiToFreq(notes[ni]);
+    osc.frequency.value = midiToFreq(voiced[ni]);
 
     var filt = audioCtx.createBiquadFilter();
     filt.type = 'lowpass';
@@ -3853,6 +3863,37 @@ function drawSpectrumBars() {
   }
 
   spectrumCtx.shadowBlur = 0;
+}
+
+var progVoicingSelect = document.getElementById('progVoicingSelect');
+
+function applyVoicingLocal(notes, voicing) {
+  if (!Array.isArray(notes) || notes.length === 0) return [];
+
+  var sorted = notes.slice().sort(function (a, b) { return a - b; });
+
+  if (voicing === 'first') {
+    var bottom = sorted.shift();
+    sorted.push(bottom + 12);
+    return sorted;
+  }
+
+  if (voicing === 'second') {
+    if (sorted.length < 2) return sorted;
+
+    var bottomA = sorted.shift();
+    var bottomB = sorted.shift();
+    sorted.push(bottomA + 12, bottomB + 12);
+    return sorted;
+  }
+
+  if (voicing === 'open') {
+    return sorted.map(function (n, i) {
+      return i % 2 === 1 ? n + 12 : n;
+    });
+  }
+
+  return sorted;
 }
 
 var CONSOLE_GROOVES = [
@@ -5006,7 +5047,7 @@ function buildHarmonyChordPad() {
         ensureLiveAudio();
 
         var chord = harmonyDiatonicChord(harmonyKey, harmonyScaleType, degree);
-        voiceChord(chord, audioCtx.currentTime + 0.01, 1);
+        voiceChord(applyVoicingLocal(chord, progVoicingSelect.value), audioCtx.currentTime + 0.01, 1);
 
         statusLine.textContent = 'אקורד ' + chordBtn.textContent + ' ✦ ' + chord.map(function (n) {
           return harmonyNoteName(n);
