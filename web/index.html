@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 24 · מהלך הרמוני · תנועת אקורדים חיה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 25 · טייס אוטומטי · המכונה מנגנת את עצמה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -570,6 +570,20 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">טייס אוטומטי · המכונה מנגנת את עצמה</span>
+    <div class="dial">
+      <label for="autopilotBarsSelect">החלטה כל</label>
+      <select id="autopilotBarsSelect">
+        <option value="4">4 תיבות</option>
+        <option value="8" selected>8 תיבות</option>
+        <option value="16">16 תיבות</option>
+      </select>
+    </div>
+    <button id="autopilotToggleBtn" class="orb gold" type="button">הפעלת טייס ▶</button>
+    <span id="autopilotNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.05em;"></span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">מקצבי יסוד · DNA קצבי</span>
     <div class="dial">
       <label for="grooveSelect">מקצב</label>
@@ -660,7 +674,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מהלך הרמוני חי · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · קליק ימני = עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · יצוא WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1898,6 +1912,7 @@ function scheduleLoop() {
     advanceSongIfNeeded();
     arrangerTick();
     progressionTick();
+    autopilotTick();
 
     nextStep = (nextStep + 1) % STEPS;
     nextStepTime += secondsPerStep();
@@ -1919,6 +1934,7 @@ function startEngine() {
   currentStep = -1;
   arrangerSteps = 0;
   progSteps = 0;
+  autopilotSteps = 0;
   foundStepCounter = 0;
 
   if (songMode) {
@@ -3242,6 +3258,125 @@ progToggleBtn.addEventListener('click', function () {
   } else {
     progNowEl.textContent = '';
     statusLine.textContent = 'המהלך ההרמוני נעצר ✦ השקט חוזר';
+  }
+});
+
+var autopilotActive = false;
+var autopilotSteps = 0;
+var autopilotRand = mulberry32Local(1);
+
+var autopilotBarsSelect = document.getElementById('autopilotBarsSelect');
+var autopilotToggleBtn = document.getElementById('autopilotToggleBtn');
+var autopilotNowEl = document.getElementById('autopilotNow');
+
+function autopilotChoose() {
+  var roll = autopilotRand();
+
+  if (roll < 0.30) return { action: 'mutate', strength: 0.05 + autopilotRand() * 0.10 };
+  if (roll < 0.50) return { action: 'groove', strength: autopilotRand() };
+  if (roll < 0.70) return { action: 'scene', strength: autopilotRand() };
+  if (roll < 0.85) return { action: 'progression', strength: autopilotRand() };
+
+  return { action: 'rest', strength: 0 };
+}
+
+function autopilotAct() {
+  var decision = autopilotChoose();
+  var statusMsg = '';
+
+  if (decision.action === 'mutate') {
+    var rate = decision.strength;
+
+    pushGridHistory();
+
+    var snapshot = captureGridSnapshot();
+    gridState = snapshot.map(function (row) {
+      return row.map(function (cell) {
+        return autopilotRand() < rate ? !cell : cell;
+      });
+    });
+    gridState[0][0] = true;
+
+    refreshAllCells();
+    markActiveScene(-1);
+    markActivePreset(-1);
+    broadcastGrid();
+    statusMsg = 'מוטציה עדינה ' + Math.round(rate * 100) + '%';
+  } else if (decision.action === 'groove') {
+    var grooveIdx = Math.floor(autopilotRand() * CONSOLE_GROOVES.length);
+    var groove = CONSOLE_GROOVES[grooveIdx];
+
+    pushGridHistory();
+
+    gridState = groove.rows.map(function (grooveRow, r) {
+      return grooveRow.map(function (grooveCell, c) {
+        return gridState[r][c] === true || grooveCell === 1;
+      });
+    });
+
+    refreshAllCells();
+    markActiveScene(-1);
+    markActivePreset(-1);
+    broadcastGrid();
+    statusMsg = 'גרוב ' + groove.name + ' (איחוד)';
+  } else if (decision.action === 'scene') {
+    var sceneIdx = Math.floor(autopilotRand() * SCENES.length);
+
+    setSceneGrid(sceneIdx);
+    postSync('scene', { index: sceneIdx });
+    sendP2p('scene', { index: sceneIdx });
+    captureSceneEvent(sceneIdx);
+    statusMsg = 'סצנת ' + SCENES[sceneIdx].name;
+  } else if (decision.action === 'progression') {
+    var progNames = [];
+    for (var pn in CONSOLE_PROGRESSIONS) progNames.push(pn);
+
+    var chosenProg = progNames[Math.floor(autopilotRand() * progNames.length)];
+    progSelect.value = chosenProg;
+
+    if (!progActive) {
+      progActive = true;
+      progToggleBtn.classList.add('active');
+    }
+
+    statusMsg = 'מהלך ' + chosenProg;
+  } else {
+    statusMsg = 'מנוחה ✧ המכונה מקשיבה';
+  }
+
+  autopilotNowEl.textContent = statusMsg;
+  statusLine.textContent = 'טייס אוטומטי ✦ ' + statusMsg;
+}
+
+function autopilotTick() {
+  if (!autopilotActive) return;
+  if (syncRole === 'follower') return;
+  if (p2pRole === 'guest') return;
+
+  autopilotSteps++;
+
+  var everyBars = Number(autopilotBarsSelect.value) || 8;
+
+  if (autopilotSteps % (16 * everyBars) !== 0) return;
+
+  autopilotAct();
+}
+
+autopilotToggleBtn.addEventListener('click', function () {
+  autopilotActive = !autopilotActive;
+  autopilotToggleBtn.classList.toggle('active', autopilotActive);
+
+  if (autopilotActive) {
+    autopilotSteps = 0;
+    autopilotRand = mulberry32Local((Date.now() % 999999) + 1);
+
+    if (!running) startEngine();
+
+    autopilotNowEl.textContent = 'הטייס חושב...';
+    statusLine.textContent = 'טייס אוטומטי פעיל ✦ המכונה מנגנת את עצמה';
+  } else {
+    autopilotNowEl.textContent = '';
+    statusLine.textContent = 'הטייס נחת ✦ השליטה חזרה לידיים שלך';
   }
 });
 
