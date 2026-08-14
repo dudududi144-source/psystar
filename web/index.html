@@ -332,7 +332,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 31 · וריאציות · הופעה חיה בלחיצה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 32 · שליטת חומרה · למידת MIDI CC</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -602,6 +602,17 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">שליטת חומרה · למידת MIDI CC</span>
+    <div class="dial">
+      <label for="ccTargetSelect">יעד</label>
+      <select id="ccTargetSelect"></select>
+    </div>
+    <button id="ccLearnBtn" class="orb ghost" type="button">למידת CC 🎛</button>
+    <button id="ccClearBtn" class="orb ghost" type="button">ניקוי מיפויים</button>
+    <span id="ccMappings" style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); direction: ltr; letter-spacing: 0.04em;"></span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">וריאציות · הופעה חיה</span>
     <button id="varBtn0" class="scene-btn" type="button">A</button>
     <button id="varBtn1" class="scene-btn" type="button">B</button>
@@ -701,7 +712,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3630,6 +3641,132 @@ variationBtns.forEach(function (btn, idx) {
   });
 });
 
+var CC_TARGETS = {
+  bpm: { el: 'bpmRange', min: 60, max: 180, label: 'פעימה BPM' },
+  swing: { el: 'swingRange', min: 0, max: 60, label: 'סווינג' },
+  intensity: { el: 'intensityRange', min: 1, max: 10, label: 'עוצמת מסע' },
+  attack: { el: 'attackRange', min: 3, max: 600, label: 'התקפה' },
+  release: { el: 'releaseRange', min: 50, max: 2500, label: 'שחרור' },
+  crush: { el: 'crushRange', min: 0, max: 100, label: 'ריסוק' },
+  phaser: { el: 'phaserRange', min: 0, max: 100, label: 'פייזר' },
+  delay: { el: 'delayRange', min: 0, max: 100, label: 'הדהוד' },
+  reverb: { el: 'reverbRange', min: 0, max: 100, label: 'מרחב' }
+};
+
+var CC_STORAGE_KEY = 'psystar.ccmap.v1';
+var ccMappings = [];
+var ccLearnArmed = false;
+
+var ccTargetSelect = document.getElementById('ccTargetSelect');
+var ccLearnBtn = document.getElementById('ccLearnBtn');
+var ccClearBtn = document.getElementById('ccClearBtn');
+var ccMappingsEl = document.getElementById('ccMappings');
+
+(function buildCcTargetSelect() {
+  for (var key in CC_TARGETS) {
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = CC_TARGETS[key].label;
+    ccTargetSelect.appendChild(opt);
+  }
+})();
+
+function saveCcMap() {
+  try {
+    localStorage.setItem(CC_STORAGE_KEY, JSON.stringify(ccMappings));
+  } catch (err) {}
+}
+
+function loadCcMap() {
+  try {
+    var raw = localStorage.getItem(CC_STORAGE_KEY);
+    if (!raw) return;
+
+    var parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+
+    ccMappings = parsed.filter(function (m) {
+      return m && typeof m.cc === 'number' && m.cc >= 0 && m.cc <= 127 &&
+             typeof m.target === 'string' && CC_TARGETS[m.target];
+    });
+  } catch (err) {}
+}
+
+function renderCcMappings() {
+  if (ccMappings.length === 0) {
+    ccMappingsEl.textContent = 'אין מיפויים';
+    return;
+  }
+
+  ccMappingsEl.textContent = ccMappings.map(function (m) {
+    return 'CC ' + m.cc + ' → ' + CC_TARGETS[m.target].label;
+  }).join(' · ');
+}
+
+function findCcTarget(cc) {
+  for (var i = 0; i < ccMappings.length; i++) {
+    if (ccMappings[i].cc === cc) return ccMappings[i].target;
+  }
+
+  return null;
+}
+
+function scaleCcLocal(value, min, max) {
+  var v = Math.max(0, Math.min(127, Math.floor(value)));
+
+  return min + (v / 127) * (max - min);
+}
+
+function handleCcMessage(cc, ccValue) {
+  if (ccLearnArmed) {
+    var target = ccTargetSelect.value;
+
+    ccMappings = ccMappings.filter(function (m) {
+      return m.cc !== cc && m.target !== target;
+    });
+    ccMappings.push({ cc: cc, target: target });
+
+    ccLearnArmed = false;
+    ccLearnBtn.classList.remove('active');
+    saveCcMap();
+    renderCcMappings();
+    statusLine.textContent = 'נלמד ✦ CC ' + cc + ' → ' + CC_TARGETS[target].label;
+    return;
+  }
+
+  var mappedTarget = findCcTarget(cc);
+  if (!mappedTarget) return;
+
+  var spec = CC_TARGETS[mappedTarget];
+  var el = document.getElementById(spec.el);
+
+  if (el) setSlider(el, scaleCcLocal(ccValue, spec.min, spec.max));
+}
+
+ccLearnBtn.addEventListener('click', function () {
+  if (!midiInputEnabled) {
+    statusLine.textContent = 'הפעילו קודם כניסת MIDI 🎹 ואז למדו';
+    return;
+  }
+
+  ccLearnArmed = !ccLearnArmed;
+  ccLearnBtn.classList.toggle('active', ccLearnArmed);
+
+  statusLine.textContent = ccLearnArmed
+    ? 'למידה חמושה 🎛 הזיזו כפתור בחומרה כדי למפות אותו ל-' + CC_TARGETS[ccTargetSelect.value].label
+    : 'הלמידה בוטלה';
+});
+
+ccClearBtn.addEventListener('click', function () {
+  ccMappings = [];
+  saveCcMap();
+  renderCcMappings();
+  statusLine.textContent = 'כל מיפויי ה-CC נמחקו';
+});
+
+loadCcMap();
+renderCcMappings();
+
 var CONSOLE_GROOVES = [
   {
     name: 'Four on the Floor',
@@ -4345,6 +4482,11 @@ function onMidiInputMessage(event) {
   var note = data[1];
   var velocity = data[2];
   var type = status & 0xf0;
+
+  if (type === 0xb0) {
+    handleCcMessage(data[1], data[2]);
+    return;
+  }
 
   if (type === 0x90 && velocity > 0) {
     playVoiceAtPitch(midiNoteToRow(note), note, velocity);
