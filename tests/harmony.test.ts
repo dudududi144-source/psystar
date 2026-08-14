@@ -84,3 +84,27 @@ test('all scale types produce their declared interval count', () => {
     expect(buildScale(60, key).length).toBe(SCALE_INTERVALS[key].length);
   }
 });
+
+
+test('progressionChordAt cycles chords every bar', () => {
+  const prog = [[60, 64, 67], [65, 69, 72], [67, 71, 74]];
+
+  expect(progressionChordAt(prog, 0, 1)).toEqual(prog[0]);
+  expect(progressionChordAt(prog, 1, 1)).toEqual(prog[1]);
+  expect(progressionChordAt(prog, 2, 1)).toEqual(prog[2]);
+  expect(progressionChordAt(prog, 3, 1)).toEqual(prog[0]);
+});
+
+test('progressionChordAt holds chords for multiple bars', () => {
+  const prog = [[1], [2], [3]];
+
+  expect(progressionChordAt(prog, 0, 2)).toEqual([1]);
+  expect(progressionChordAt(prog, 1, 2)).toEqual([1]);
+  expect(progressionChordAt(prog, 2, 2)).toEqual([2]);
+  expect(progressionChordAt(prog, 5, 2)).toEqual([3]);
+  expect(progressionChordAt(prog, 6, 2)).toEqual([1]);
+});
+
+test('progressionChordAt guards empty progressions', () => {
+  expect(progressionChordAt([], 0, 1)).toEqual([]);
+});
