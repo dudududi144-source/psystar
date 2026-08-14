@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test';
-import { midiToNoteName, noteToMidi, buildScale, buildScaleSpanning, buildChord, diatonicChord, buildProgression, scaleNoteNames, SCALE_INTERVALS } from '../src/domain/harmony.ts';
+import { midiToNoteName, noteToMidi, buildScale, buildScaleSpanning, buildChord, diatonicChord, buildProgression, scaleNoteNames, SCALE_INTERVALS, progressionChordAt } from '../src/domain/harmony.ts';
 
 test('midiToNoteName maps middle C', () => {
   const info = midiToNoteName(60);
