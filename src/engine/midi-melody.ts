@@ -13,7 +13,7 @@ export function degreeToMidi(degree: number, scaleIntervals: number[], keyMidi: 
 }
 
 export function noteOnFor(channel: number, note: number, velocity: number): number[] {
-  return [0x90 | (channel & 0x0f), note & 0x7f, Math.max(1, Math.min(127, Math.round(velocity))))];
+  return [0x90 | (channel & 0x0f), note & 0x7f, Math.max(1, Math.min(127, Math.round(velocity)))];
 }
 
 export function noteOffFor(channel: number, note: number): number[] {
