@@ -52,7 +52,8 @@ test('removeMapping removes only the chosen cc', () => {
 test('scaleCc maps 0-127 onto the target range', () => {
   expect(scaleCc(0, 60, 180)).toBeCloseTo(60, 6);
   expect(scaleCc(127, 60, 180)).toBeCloseTo(180, 6);
-  expect(scaleCc(63.5, 0, 100)).toBeCloseTo(50, 1);
+  // scaleCc floors cc values (real cc messages are integers): 63.5 -> 63
+  expect(scaleCc(63.5, 0, 100)).toBeCloseTo((63 / 127) * 100, 6);
   expect(scaleCc(200, 0, 100)).toBeCloseTo(100, 6);
   expect(scaleCc(5, 100, 0)).toBeCloseTo(100 - (5 / 127) * 100, 6);
 });
