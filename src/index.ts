@@ -42,6 +42,7 @@ export * from './engine/midi-clock.ts';
 export * from './engine/song-render.ts';
 export * from './engine/session.ts';
 export * from './engine/metronome.ts';
+export * from './engine/midi-learn.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
 export * from './integration/sync-protocol.ts';
