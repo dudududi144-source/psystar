@@ -49,6 +49,7 @@ export * from './engine/arpeggiator.ts';
 export * from './engine/midi-melody.ts';
 export * from './engine/mastering.ts';
 export * from './engine/metering.ts';
+export * from './engine/stems.ts';
 export * from './engine/midi-learn.ts';
 export * from './integration/foundation-bridge.ts';
 export * from './integration/device-registry.ts';
