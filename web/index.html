@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 42 · מפל הספקטרום · העקבות שהצליל משאיר</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 43 · איקיו מאסטר · עיצוב הגוון</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -634,6 +634,25 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  <section class="rack">
+    <span class="rack-title">איקיו מאסטר · עיצוב הגוון</span>
+    <div class="dial">
+      <label for="eqLowRange">בס dB</label>
+      <input id="eqLowRange" type="range" min="-12" max="12" value="0"/>
+      <span id="eqLowValue">0</span>
+    </div>
+    <div class="dial">
+      <label for="eqMidRange">אמצע dB</label>
+      <input id="eqMidRange" type="range" min="-12" max="12" value="0"/>
+      <span id="eqMidValue">0</span>
+    </div>
+    <div class="dial">
+      <label for="eqHighRange">גבוה dB</label>
+      <input id="eqHighRange" type="range" min="-12" max="12" value="0"/>
+      <span id="eqHighValue">0</span>
+    </div>
+  </section>
+
   <section class="rack" style="flex-direction: column; align-items: stretch;">
     <span class="rack-title">מדי עוצמה · מה שהמאסטרינג עושה עכשיו</span>
     <div class="meter-track">
@@ -859,7 +878,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1143,7 +1162,26 @@ function initAudio() {
   phaserDry.connect(masterGain);
   phaserWet.connect(masterGain);
 
-  masterGain.connect(limiter);
+  eqLow = audioCtx.createBiquadFilter();
+  eqLow.type = 'lowshelf';
+  eqLow.frequency.value = 120;
+  eqLow.gain.value = Math.max(-12, Math.min(12, eqLowDb));
+
+  eqMid = audioCtx.createBiquadFilter();
+  eqMid.type = 'peaking';
+  eqMid.frequency.value = 1000;
+  eqMid.Q.value = 1;
+  eqMid.gain.value = Math.max(-12, Math.min(12, eqMidDb));
+
+  eqHigh = audioCtx.createBiquadFilter();
+  eqHigh.type = 'highshelf';
+  eqHigh.frequency.value = 8000;
+  eqHigh.gain.value = Math.max(-12, Math.min(12, eqHighDb));
+
+  masterGain.connect(eqLow);
+  eqLow.connect(eqMid);
+  eqMid.connect(eqHigh);
+  eqHigh.connect(limiter);
   limiter.connect(analyser);
   analyser.connect(audioCtx.destination);
 
@@ -3241,8 +3279,27 @@ function renderJourneyToWav(bars, source, opts) {
   var octx = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
 
   var master = octx.createGain();
-  master.gain.value = 0.8;
-  master.connect(octx.destination);
+  master.gain.value = Math.pow(10, Math.max(-60, Math.min(12, masterDb)) / 20);
+  var offEqLow = audioCtx.createBiquadFilter();
+  offEqLow.type = 'lowshelf';
+  offEqLow.frequency.value = 120;
+  offEqLow.gain.value = Math.max(-12, Math.min(12, eqLowDb));
+
+  var offEqMid = audioCtx.createBiquadFilter();
+  offEqMid.type = 'peaking';
+  offEqMid.frequency.value = 1000;
+  offEqMid.Q.value = 1;
+  offEqMid.gain.value = Math.max(-12, Math.min(12, eqMidDb));
+
+  var offEqHigh = audioCtx.createBiquadFilter();
+  offEqHigh.type = 'highshelf';
+  offEqHigh.frequency.value = 8000;
+  offEqHigh.gain.value = Math.max(-12, Math.min(12, eqHighDb));
+
+  master.connect(offEqLow);
+  offEqLow.connect(offEqMid);
+  offEqMid.connect(offEqHigh);
+  offEqHigh.connect(octx.destination);
 
   var bus = octx.createGain();
   bus.gain.value = 1;
@@ -5725,6 +5782,13 @@ importInput.addEventListener('change', function () {
 var limiterNode = null;
 
 var masterDb = -2;
+
+var eqLowDb = 0;
+var eqMidDb = 0;
+var eqHighDb = 0;
+var eqLow = null;
+var eqMid = null;
+var eqHigh = null;
 var compThreshold = -14;
 var compRatio = 8;
 
@@ -5924,6 +5988,39 @@ function updateWaterfall() {
     waterfallCtx.fillRect(i * rowWidth, 0, Math.ceil(rowWidth), 1);
   }
 }
+
+var eqLowRange = document.getElementById('eqLowRange');
+var eqLowValueEl = document.getElementById('eqLowValue');
+var eqMidRange = document.getElementById('eqMidRange');
+var eqMidValueEl = document.getElementById('eqMidValue');
+var eqHighRange = document.getElementById('eqHighRange');
+var eqHighValueEl = document.getElementById('eqHighValue');
+
+function applyEqLocal() {
+  if (!audioCtx) return;
+
+  if (eqLow) eqLow.gain.value = Math.max(-12, Math.min(12, eqLowDb));
+  if (eqMid) eqMid.gain.value = Math.max(-12, Math.min(12, eqMidDb));
+  if (eqHigh) eqHigh.gain.value = Math.max(-12, Math.min(12, eqHighDb));
+}
+
+eqLowRange.addEventListener('input', function () {
+  eqLowDb = Number(eqLowRange.value);
+  eqLowValueEl.textContent = eqLowRange.value;
+  applyEqLocal();
+});
+
+eqMidRange.addEventListener('input', function () {
+  eqMidDb = Number(eqMidRange.value);
+  eqMidValueEl.textContent = eqMidRange.value;
+  applyEqLocal();
+});
+
+eqHighRange.addEventListener('input', function () {
+  eqHighDb = Number(eqHighRange.value);
+  eqHighValueEl.textContent = eqHighRange.value;
+  applyEqLocal();
+});
 
 var midiEnabled = false;
 var midiOutput = null;
@@ -6125,6 +6222,9 @@ function captureSessionState() {
     masterDb: masterDb,
     compThreshold: compThreshold,
     compRatio: compRatio,
+    eqLowDb: eqLowDb,
+    eqMidDb: eqMidDb,
+    eqHighDb: eqHighDb,
     variations: variationSlots.slice(),
     bpm: bpm,
     swing: swingPercent,
@@ -6255,6 +6355,29 @@ function restoreSessionState(snapshot) {
   buildHarmonyChordPad();
   buildRollPanel();
   refreshAllCells();
+  if (typeof snapshot.masterDb === 'number') masterDb = Math.max(-60, Math.min(12, snapshot.masterDb));
+  if (typeof snapshot.compThreshold === 'number') compThreshold = Math.max(-60, Math.min(0, snapshot.compThreshold));
+  if (typeof snapshot.compRatio === 'number') compRatio = Math.max(1, Math.min(20, snapshot.compRatio));
+  if (typeof snapshot.eqLowDb === 'number') eqLowDb = Math.max(-12, Math.min(12, snapshot.eqLowDb));
+  if (typeof snapshot.eqMidDb === 'number') eqMidDb = Math.max(-12, Math.min(12, snapshot.eqMidDb));
+  if (typeof snapshot.eqHighDb === 'number') eqHighDb = Math.max(-12, Math.min(12, snapshot.eqHighDb));
+
+  masterDbRange.value = String(masterDb);
+  masterDbValueEl.textContent = String(masterDb);
+  compThresholdRange.value = String(compThreshold);
+  compThresholdValueEl.textContent = String(compThreshold);
+  compRatioRange.value = String(compRatio);
+  compRatioValueEl.textContent = String(compRatio);
+  eqLowRange.value = String(eqLowDb);
+  eqLowValueEl.textContent = String(eqLowDb);
+  eqMidRange.value = String(eqMidDb);
+  eqMidValueEl.textContent = String(eqMidDb);
+  eqHighRange.value = String(eqHighDb);
+  eqHighValueEl.textContent = String(eqHighDb);
+
+  applyMasteringLocal();
+  applyEqLocal();
+
   statusLine.textContent = 'הסשן שוחזר ✦ כל מה שבנית מחכה לך';
 }
 
