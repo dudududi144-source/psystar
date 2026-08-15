@@ -56,3 +56,23 @@ export function scaleCc(value: number, min: number, max: number): number {
 
   return lo + (v / 127) * (hi - lo);
 }
+
+
+export interface CcTargetSpec {
+  min: number;
+  max: number;
+  label: string;
+}
+
+export var MASTERING_CC_SPECS: Record<string, CcTargetSpec> = {
+  masterDb: { min: -24, max: 6, label: 'מאסטר dB' },
+  compThreshold: { min: -40, max: 0, label: 'סף קומפרסיה' },
+  compRatio: { min: 1, max: 20, label: 'יחס קומפרסיה' },
+  eqLow: { min: -12, max: 12, label: 'EQ בס' },
+  eqMid: { min: -12, max: 12, label: 'EQ אמצע' },
+  eqHigh: { min: -12, max: 12, label: 'EQ גבוה' }
+};
+
+export function isMasteringTarget(name: string): boolean {
+  return typeof name === 'string' && Object.prototype.hasOwnProperty.call(MASTERING_CC_SPECS, name);
+}
