@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 52 · יצוא מהלך MIDI · האקורדים יוצאים ל-DAW</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 53 · הקלטה חיה · ההופעה נשמרת כ-WAV</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -773,6 +773,7 @@ select option { background: #12082b; color: #fff; }
     <button id="stemExportBtn" class="orb ghost" type="button">יצוא סטמים ⬇</button>
     <button id="midiExportBtn" class="orb ghost" type="button">יצוא MIDI ⬇</button>
     <button id="progMidiExportBtn" class="orb ghost" type="button">יצוא מהלך MIDI ⬇</button>
+    <button id="liveRecordBtn" class="orb ghost" type="button">הקלטה חיה 🔴</button>
     <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
   </section>
 
@@ -1007,7 +1008,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6748,6 +6749,143 @@ function exportProgressionMidi() {
 }
 
 progMidiExportBtn.addEventListener('click', exportProgressionMidi);
+
+var liveRecordBtn = document.getElementById('liveRecordBtn');
+var liveRecorderNode = null;
+var liveRecordingActive = false;
+var liveChunksL = [];
+var liveChunksR = [];
+
+function encodeWavFromBuffers(left, right, sampleRate) {
+  var numFrames = left.length;
+  var dataSize = numFrames * 4;
+  var ab = new ArrayBuffer(44 + dataSize);
+  var view = new DataView(ab);
+
+  function writeStr(offset, text) {
+    for (var i = 0; i < text.length; i++) {
+      view.setUint8(offset + i, text.charCodeAt(i));
+    }
+  }
+
+  function f2i16(value) {
+    var c = Math.max(-1, Math.min(1, value));
+    return c < 0 ? c * 0x8000 : c * 0x7fff;
+  }
+
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 2, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 4, true);
+  view.setUint16(32, 4, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  var offset = 44;
+  for (var i = 0; i < numFrames; i++) {
+    view.setInt16(offset, f2i16(left[i]), true);
+    offset += 2;
+    view.setInt16(offset, f2i16(right[i]), true);
+    offset += 2;
+  }
+
+  return new Uint8Array(ab);
+}
+
+function startLiveRecording() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  liveChunksL = [];
+  liveChunksR = [];
+  liveRecordingActive = true;
+
+  liveRecorderNode = audioCtx.createScriptProcessor(4096, 2, 2);
+
+  analyser.disconnect(audioCtx.destination);
+  analyser.connect(liveRecorderNode);
+  liveRecorderNode.connect(audioCtx.destination);
+
+  liveRecorderNode.onaudioprocess = function (e) {
+    if (!liveRecordingActive) return;
+
+    var inputL = e.inputBuffer.getChannelData(0);
+    var inputR = e.inputBuffer.numberOfChannels > 1 ? e.inputBuffer.getChannelData(1) : inputL;
+
+    liveChunksL.push(new Float32Array(inputL));
+    liveChunksR.push(new Float32Array(inputR));
+
+    var outL = e.outputBuffer.getChannelData(0);
+    outL.set(inputL);
+
+    if (e.outputBuffer.numberOfChannels > 1) {
+      var outR = e.outputBuffer.getChannelData(1);
+      outR.set(inputR);
+    }
+  };
+
+  liveRecordBtn.classList.add('active');
+  statusLine.textContent = 'הקלטה חיה פעילה 🔴 נגנו, ואז לחצו שוב לעצירה ויצוא WAV';
+}
+
+function stopLiveRecording() {
+  liveRecordingActive = false;
+
+  if (liveRecorderNode) {
+    liveRecorderNode.disconnect();
+    analyser.disconnect(liveRecorderNode);
+    analyser.connect(audioCtx.destination);
+    liveRecorderNode = null;
+  }
+
+  liveRecordBtn.classList.remove('active');
+
+  if (liveChunksL.length === 0) {
+    statusLine.textContent = 'לא הוקלט דבר ✦ נגנו משהו במהלך ההקלטה';
+    return;
+  }
+
+  var totalLen = 0;
+  liveChunksL.forEach(function (c) { totalLen += c.length; });
+
+  var left = new Float32Array(totalLen);
+  var right = new Float32Array(totalLen);
+  var off = 0;
+
+  for (var i = 0; i < liveChunksL.length; i++) {
+    left.set(liveChunksL[i], off);
+    right.set(liveChunksR[i], off);
+    off += liveChunksL[i].length;
+  }
+
+  var wav = encodeWavFromBuffers(left, right, audioCtx.sampleRate);
+  var blob = new Blob([wav], { type: 'audio/wav' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-live.wav';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'ההקלטה החיה יוצאה כ-WAV ✦ ' + (totalLen / audioCtx.sampleRate).toFixed(1) + ' שניות';
+}
+
+liveRecordBtn.addEventListener('click', function () {
+  if (liveRecordingActive) {
+    stopLiveRecording();
+  } else {
+    startLiveRecording();
+  }
+});
 
 var midiEnabled = false;
 var midiOutput = null;
