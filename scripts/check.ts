@@ -104,6 +104,7 @@ const requiredFiles = [
   'tests/auto-dream.test.ts',
   'tests/legato.test.ts',
   'tests/journey-timeline.test.ts',
+  'tests/help.test.ts',
   'tests/mastering.test.ts',
   'tests/metering.test.ts',
   'tests/stems.test.ts',
