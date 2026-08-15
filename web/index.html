@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 50 · מפת הקיצורים · כל המכונה בידיים</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 51 · יצוא MIDI · התבנית יוצאת לכל DAW</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -771,6 +771,7 @@ select option { background: #12082b; color: #fff; }
     </div>
     <button id="wavExportBtn" class="orb gold" type="button">עיבוד והורדה ⬇</button>
     <button id="stemExportBtn" class="orb ghost" type="button">יצוא סטמים ⬇</button>
+    <button id="midiExportBtn" class="orb ghost" type="button">יצוא MIDI ⬇</button>
     <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
   </section>
 
@@ -1005,7 +1006,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6567,6 +6568,135 @@ window.addEventListener('keydown', function (e) {
     closeHelp();
   }
 });
+
+var midiExportBtn = document.getElementById('midiExportBtn');
+
+function writeVarLenLocal(value) {
+  var v = Math.max(0, Math.floor(value));
+  var buffer = v & 0x7f;
+  var out = [];
+
+  v = v >> 7;
+
+  while (v > 0) {
+    buffer = buffer << 8;
+    buffer = buffer | ((v & 0x7f) | 0x80);
+    v = v >> 7;
+  }
+
+  while (true) {
+    out.push(buffer & 0xff);
+
+    if (buffer & 0x80) {
+      buffer = buffer >> 8;
+    } else {
+      break;
+    }
+  }
+
+  return out;
+}
+
+function buildMidiTrackLocal(events) {
+  var sorted = events.slice().sort(function (a, b) {
+    return a.tick - b.tick;
+  });
+
+  var timeline = [];
+
+  for (var i = 0; i < sorted.length; i++) {
+    var e = sorted[i];
+    var note = Math.max(0, Math.min(127, Math.floor(e.note)));
+    var vel = Math.max(1, Math.min(127, Math.floor(e.velocity)));
+    var dur = Math.max(1, Math.floor(e.duration));
+
+    timeline.push({ tick: e.tick, data: [0x90, note, vel] });
+    timeline.push({ tick: e.tick + dur, data: [0x80, note, 0] });
+  }
+
+  timeline.sort(function (a, b) {
+    return a.tick - b.tick;
+  });
+
+  var bytes = [];
+  var lastTick = 0;
+
+  for (var j = 0; j < timeline.length; j++) {
+    var delta = timeline[j].tick - lastTick;
+
+    bytes = bytes.concat(writeVarLenLocal(delta));
+    bytes = bytes.concat(timeline[j].data);
+    lastTick = timeline[j].tick;
+  }
+
+  bytes = bytes.concat(writeVarLenLocal(0));
+  bytes = bytes.concat([0xff, 0x2f, 0x00]);
+
+  return bytes;
+}
+
+function buildMidiFileLocal(events, ticksPerQuarter) {
+  var tpq = Math.max(1, Math.floor(ticksPerQuarter || 480));
+  var track = buildMidiTrackLocal(events);
+
+  var header = [
+    0x4d, 0x54, 0x68, 0x64,
+    0x00, 0x00, 0x00, 0x06,
+    0x00, 0x00,
+    0x00, 0x01,
+    (tpq >> 8) & 0xff, tpq & 0xff
+  ];
+
+  var trackHeader = [
+    0x4d, 0x54, 0x72, 0x6b,
+    (track.length >> 24) & 0xff,
+    (track.length >> 16) & 0xff,
+    (track.length >> 8) & 0xff,
+    track.length & 0xff
+  ];
+
+  return header.concat(trackHeader).concat(track);
+}
+
+function exportMidiFile() {
+  var ticksPerQuarter = 480;
+  var ticksPerStep = Math.floor(ticksPerQuarter / 4);
+  var events = [];
+
+  for (var r = 0; r < gridState.length; r++) {
+    for (var s = 0; s < gridState[r].length; s++) {
+      if (!gridState[r][s]) continue;
+
+      var note = noteForRow(r, s);
+      var accentBoost = accentGrid[r][s] ? 1.2 : 1;
+      var vel = Math.round(Math.max(1, Math.min(127, velocityGrid[r][s] * 127 * accentBoost)));
+      var dur = r === 2 ? ticksPerStep * 4 : ticksPerStep;
+
+      events.push({ tick: s * ticksPerStep, note: note, velocity: vel, duration: dur });
+    }
+  }
+
+  if (events.length === 0) {
+    statusLine.textContent = 'הרשת ריקה ✦ אין מה לייצא';
+    return;
+  }
+
+  var bytes = buildMidiFileLocal(events, ticksPerQuarter);
+  var blob = new Blob([new Uint8Array(bytes)], { type: 'audio/midi' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-pattern.mid';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'קובץ MIDI יוצא ✦ ' + events.length + ' תווים לכל DAW';
+}
+
+midiExportBtn.addEventListener('click', exportMidiFile);
 
 var midiEnabled = false;
 var midiOutput = null;
