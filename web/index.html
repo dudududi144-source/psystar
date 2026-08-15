@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 47 · חלימה אוטומטית · המכונה חולמת לבד</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 48 · לגאטו · אקורדים שנמרחים בזמן</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -825,6 +825,17 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">לגאטו · אקורדים שנמרחים בזמן</span>
+    <button id="legatoBtn" class="orb ghost" type="button">לגאטו ∞</button>
+    <div class="dial">
+      <label for="legatoRange">מריחה</label>
+      <input id="legatoRange" type="range" min="0" max="100" value="50"/>
+      <span id="legatoValue">50%</span>
+    </div>
+    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5);">חל על אקורדי בלוק בלבד · הארפג'יו נשאר חד</span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">מהלך הרמוני · תנועת אקורדים</span>
     <div class="dial">
       <label for="progSelect">מהלך</label>
@@ -911,7 +922,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3581,6 +3592,11 @@ function playProgressionChord(notes) {
   var when = audioCtx.currentTime + 0.02;
   var barsPerChord = Number(progBarsSelect.value) || 1;
   var chordDur = 16 * (60 / bpm / 4) * barsPerChord;
+
+  if (legatoActive) {
+    chordDur = sustainDurationLocal(chordDur, legatoAmount);
+  }
+
   var voiced = applyVoicingLocal(notes, progVoicingSelect.value);
 
   if (progArpSelect.value !== 'block') {
@@ -6356,6 +6372,35 @@ autoDreamBtn.addEventListener('click', function () {
 
 dreamIntervalSelect.addEventListener('change', function () {
   autoDreamInterval = Number(dreamIntervalSelect.value);
+});
+
+var legatoActive = false;
+var legatoAmount = 0.5;
+
+var legatoBtn = document.getElementById('legatoBtn');
+var legatoRange = document.getElementById('legatoRange');
+var legatoValueEl = document.getElementById('legatoValue');
+
+function sustainDurationLocal(barDurationSec, sustainAmount) {
+  if (barDurationSec <= 0) return 0;
+
+  var amount = Math.max(0, Math.min(1, sustainAmount));
+
+  return barDurationSec * (1 + amount);
+}
+
+legatoBtn.addEventListener('click', function () {
+  legatoActive = !legatoActive;
+  legatoBtn.classList.toggle('active', legatoActive);
+
+  statusLine.textContent = legatoActive
+    ? 'לגאטו פעיל ∞ האקורדים יימרחו לתוך התיבה הבאה'
+    : 'הלגאטו נכבה ✦ האקורדים חוזרים להיות בלוקים';
+});
+
+legatoRange.addEventListener('input', function () {
+  legatoAmount = Number(legatoRange.value) / 100;
+  legatoValueEl.textContent = legatoRange.value + '%';
 });
 
 var midiEnabled = false;
