@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 37 · טרנספורמציות רול · קומפוזיציה חיה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 38 · מחולל מהלכים · הרמוניה גנרטיבית</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -681,7 +681,7 @@ select option { background: #12082b; color: #fff; }
     <span class="rack-title">מהלך הרמוני · תנועת אקורדים</span>
     <div class="dial">
       <label for="progSelect">מהלך</label>
-      <select id="progSelect"></select>
+      <select id="progSelect"><option value="generated">מהלך מחולל ✦</option></select>
     </div>
     <div class="dial">
       <label for="progBarsSelect">תיבות לאקורד</label>
@@ -710,6 +710,15 @@ select option { background: #12082b; color: #fff; }
       </select>
     </div>
     <button id="progToggleBtn" class="orb gold" type="button">נגינת מהלך ▶</button>
+    <div class="dial">
+      <label for="genLenSelect">אורך</label>
+      <select id="genLenSelect">
+        <option value="4">4</option>
+        <option value="8" selected>8</option>
+        <option value="16">16</option>
+      </select>
+    </div>
+    <button id="genProgBtn" class="orb ghost" type="button">חולל מהלך 🎲</button>
     <span id="progNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); direction: ltr; letter-spacing: 0.05em;"></span>
   </section>
 
@@ -752,7 +761,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3424,7 +3433,7 @@ function progressionTick() {
   if (progSteps % 16 !== 0) return;
 
   var bar = Math.floor(progSteps / 16) - 1;
-  var degrees = CONSOLE_PROGRESSIONS[progSelect.value];
+  var degrees = progSelect.value === 'generated' ? customProgDegrees : CONSOLE_PROGRESSIONS[progSelect.value];
 
   if (!degrees || degrees.length === 0) return;
 
@@ -4048,6 +4057,52 @@ function sendChordMidi(notes, when, durSec) {
     } catch (err) {}
   }
 }
+
+var customProgDegrees = [];
+var genLenSelect = document.getElementById('genLenSelect');
+var genProgBtn = document.getElementById('genProgBtn');
+
+var PROG_FUNC = { 1: 'T', 2: 'SD', 3: 'T', 4: 'SD', 5: 'D', 6: 'T', 7: 'D' };
+
+function nextDegreeCandidatesLocal(current) {
+  var fn = PROG_FUNC[current] || 'T';
+
+  if (fn === 'T') return [2, 4, 5, 6];
+  if (fn === 'SD') return [5, 7, 6];
+
+  return [1, 6];
+}
+
+function generateProgressionLocal(length) {
+  var n = Math.max(2, Math.floor(length));
+  var degrees = [1];
+
+  for (var i = 1; i < n - 1; i++) {
+    var current = degrees[degrees.length - 1];
+    var candidates = nextDegreeCandidatesLocal(current);
+
+    degrees.push(candidates[Math.floor(Math.random() * candidates.length)]);
+  }
+
+  var last = degrees[degrees.length - 1];
+  var closers = nextDegreeCandidatesLocal(last);
+  var closer = closers[Math.floor(Math.random() * closers.length)];
+
+  if (closers.indexOf(1) !== -1 && Math.random() < 0.7) {
+    closer = 1;
+  }
+
+  degrees.push(closer);
+
+  return degrees;
+}
+
+genProgBtn.addEventListener('click', function () {
+  customProgDegrees = generateProgressionLocal(Number(genLenSelect.value) || 8);
+  progSelect.value = 'generated';
+  progNowEl.textContent = 'מהלך מחולל ✦ ' + customProgDegrees.join('-');
+  statusLine.textContent = 'מהלך חדש נולד ✦ ' + customProgDegrees.join('-') + ' · לחצו נגינת מהלך';
+});
 
 var progVoicingSelect = document.getElementById('progVoicingSelect');
 var progArpSelect = document.getElementById('progArpSelect');
