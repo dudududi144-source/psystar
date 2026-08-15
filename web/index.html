@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 54 · פריסטים למאסטרינג · הגוון נשמר</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 55 · סטליסט · הופעה שלמה בכל רגע</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -868,6 +868,16 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">סטליסט · הופעה שלמה בכל רגע</span>
+    <div class="dial">
+      <label for="setlistSelect">סט</label>
+      <select id="setlistSelect"></select>
+    </div>
+    <button id="saveSetlistBtn" class="orb ghost" type="button">שמירה כסט ✦</button>
+    <button id="deleteSetlistBtn" class="orb ghost" type="button">מחיקת סט ✕</button>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">מקצבי יסוד · DNA קצבי</span>
     <div class="dial">
       <label for="grooveSelect">מקצב</label>
@@ -1013,7 +1023,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">סטליסט · פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6967,6 +6977,112 @@ saveMasteringPresetBtn.addEventListener('click', function () {
 });
 
 refreshMasteringPresetSelect();
+
+var setlistEntries = [];
+
+var setlistSelect = document.getElementById('setlistSelect');
+var saveSetlistBtn = document.getElementById('saveSetlistBtn');
+var deleteSetlistBtn = document.getElementById('deleteSetlistBtn');
+
+function capturePerformanceState() {
+  return {
+    grid: gridState.map(function (row) { return row.slice(); }),
+    velocity: velocityGrid.map(function (row) { return row.slice(); }),
+    accents: accentGrid.map(function (row) { return row.slice(); }),
+    roll: leadRoll.slice()
+  };
+}
+
+function applyPerformanceState(state) {
+  if (!state) return;
+
+  if (Array.isArray(state.grid) && state.grid.length === gridState.length) {
+    gridState = state.grid.map(function (row) {
+      return (Array.isArray(row) ? row : []).map(function (cell) { return cell === true; });
+    });
+  }
+
+  if (Array.isArray(state.velocity) && state.velocity.length === velocityGrid.length) {
+    velocityGrid = state.velocity.map(function (row) {
+      return (Array.isArray(row) ? row : []).map(function (v) {
+        var n = Number(v);
+        return isNaN(n) ? 1.0 : Math.max(0.1, Math.min(1.5, n));
+      });
+    });
+  }
+
+  if (Array.isArray(state.accents) && state.accents.length === accentGrid.length) {
+    accentGrid = state.accents.map(function (row) {
+      return (Array.isArray(row) ? row : []).map(function (a) { return a === true; });
+    });
+  }
+
+  if (Array.isArray(state.roll) && state.roll.length === leadRoll.length) {
+    leadRoll = state.roll.map(function (r) {
+      var n = Number(r);
+      return isNaN(n) ? -1 : Math.max(-1, Math.min(11, Math.floor(n)));
+    });
+  }
+
+  refreshAllCells();
+  buildRollPanel();
+  broadcastGrid();
+}
+
+function refreshSetlistSelect() {
+  setlistSelect.innerHTML = '';
+
+  if (setlistEntries.length === 0) {
+    var empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'אין סטים שמורים';
+    setlistSelect.appendChild(empty);
+    return;
+  }
+
+  setlistEntries.forEach(function (entry, idx) {
+    var opt = document.createElement('option');
+    opt.value = String(idx);
+    opt.textContent = entry.name;
+    setlistSelect.appendChild(opt);
+  });
+}
+
+saveSetlistBtn.addEventListener('click', function () {
+  var name = 'סט ' + (setlistEntries.length + 1);
+
+  setlistEntries.push({ name: name, state: capturePerformanceState() });
+  refreshSetlistSelect();
+  setlistSelect.value = String(setlistEntries.length - 1);
+  statusLine.textContent = 'סט נשמר ✦ ' + name + ' · כל שכבות ההופעה';
+});
+
+setlistSelect.addEventListener('change', function () {
+  var idx = Number(setlistSelect.value);
+
+  if (!setlistEntries[idx]) return;
+
+  pushGridHistory();
+  applyPerformanceState(setlistEntries[idx].state);
+  statusLine.textContent = 'סט נטען ✦ ' + setlistEntries[idx].name;
+});
+
+deleteSetlistBtn.addEventListener('click', function () {
+  var idx = Number(setlistSelect.value);
+
+  if (!setlistEntries[idx]) {
+    statusLine.textContent = 'אין סט למחיקה';
+    return;
+  }
+
+  var name = setlistEntries[idx].name;
+
+  setlistEntries.splice(idx, 1);
+  refreshSetlistSelect();
+  statusLine.textContent = 'סט נמחק ✕ ' + name;
+});
+
+refreshSetlistSelect();
 
 var midiEnabled = false;
 var midiOutput = null;
