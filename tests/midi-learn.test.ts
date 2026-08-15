@@ -1,5 +1,12 @@
 import { test, expect } from 'bun:test';
-import { createCcMap, isValidCc, addMapping, removeMapping, findTarget, scaleCc   MASTERING_CC_SPECS,
+import {
+  createCcMap,
+  isValidCc,
+  addMapping,
+  removeMapping,
+  findTarget,
+  scaleCc,
+  MASTERING_CC_SPECS,
   isMasteringTarget
 } from '../src/engine/midi-learn.ts';
 
