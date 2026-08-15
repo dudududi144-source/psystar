@@ -389,7 +389,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 40 · מדי עוצמה · רואים את המאסטרינג</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 41 · יצוא סטמים · לכל DAW בעולם</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -659,6 +659,7 @@ select option { background: #12082b; color: #fff; }
       </select>
     </div>
     <button id="wavExportBtn" class="orb gold" type="button">עיבוד והורדה ⬇</button>
+    <button id="stemExportBtn" class="orb ghost" type="button">יצוא סטמים ⬇</button>
     <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
   </section>
 
@@ -848,7 +849,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3194,7 +3195,9 @@ function gridAtStepLocal(segments, stepIndex) {
   return null;
 }
 
-function renderJourneyToWav(bars, source) {
+function renderJourneyToWav(bars, source, opts) {
+  var gridOverride = opts && opts.grid ? opts.grid : null;
+  var filename = opts && opts.filename ? opts.filename : 'psystar-journey.wav';
   if (typeof OfflineAudioContext === 'undefined') {
     statusLine.textContent = 'הדפדפן לא תומך בעיבוד אופליין';
     return;
@@ -3272,7 +3275,7 @@ function renderJourneyToWav(bars, source) {
   for (var s = 0; s < totalSteps; s++) {
     var stepTime = 0.05 + s * stepDur;
     var stepIdx = s % 16;
-    var activeGrid = segments ? gridAtStepLocal(segments, s) : gridState;
+    var activeGrid = gridOverride ? gridOverride : (segments ? gridAtStepLocal(segments, s) : gridState);
 
     if (!activeGrid) continue;
 
@@ -3299,19 +3302,19 @@ function renderJourneyToWav(bars, source) {
     }
   }
 
-  octx.startRendering().then(function (rendered) {
+  return octx.startRendering().then(function (rendered) {
     var blob = encodeWavLocal(rendered);
     var url = URL.createObjectURL(blob);
     var anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'psystar-journey.wav';
+    anchor.download = filename;
     anchor.click();
 
     setTimeout(function () {
       URL.revokeObjectURL(url);
     }, 3000);
 
-    statusLine.textContent = 'המסע עובד ✦ ' + bars + ' תיבות של אודיו אמיתי ירדו כ-WAV';
+    statusLine.textContent = 'העיבוד ירד ✦ ' + filename;
   }).catch(function () {
     statusLine.textContent = 'העיבוד נכשל ✦ נסו שוב';
   });
@@ -5814,6 +5817,53 @@ function renderMeter() {
   reductionEl.style.width = (Math.min(1, meterReduction / 12) * 100).toFixed(1) + '%';
   dbLabel.textContent = meterPeakDb <= -59.5 ? '-∞' : meterPeakDb.toFixed(1) + ' dB';
 }
+
+var STEM_NAMES = ['bass', 'lead', 'pad', 'spark'];
+var stemExportBtn = document.getElementById('stemExportBtn');
+
+function soloGridLocal(grid, soloIndex) {
+  return grid.map(function (row, i) {
+    return row.map(function (cell) {
+      return i === soloIndex && cell === true;
+    });
+  });
+}
+
+function stemHasNotes(grid) {
+  return grid.some(function (row) {
+    return row.some(Boolean);
+  });
+}
+
+function waitMs(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function exportStems() {
+  var bars = Number(wavBarsSelect.value);
+  var exported = 0;
+
+  for (var si = 0; si < STEM_NAMES.length; si++) {
+    var solo = soloGridLocal(gridState, si);
+
+    if (!stemHasNotes(solo)) continue;
+
+    statusLine.textContent = 'מעבד סטם ' + STEM_NAMES[si] + ' ✦ ' + (si + 1) + '/' + STEM_NAMES.length;
+    await renderJourneyToWav(bars, 'grid', { grid: solo, filename: 'psystar-' + STEM_NAMES[si] + '.wav' });
+    exported++;
+    await waitMs(350);
+  }
+
+  if (exported === 0) {
+    statusLine.textContent = 'הרשת ריקה ✦ אין מה לייצא';
+  } else {
+    statusLine.textContent = exported + ' סטמים יוצאו ✦ קחו אותם לכל DAW';
+  }
+}
+
+stemExportBtn.addEventListener('click', exportStems);
 
 var midiEnabled = false;
 var midiOutput = null;
