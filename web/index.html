@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 36 · MIDI מלא · מלודיה ואקורדים החוצה</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 37 · טרנספורמציות רול · קומפוזיציה חיה</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -714,6 +714,17 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">טרנספורמציות רול · קומפוזיציה חיה</span>
+    <button id="rollUpBtn" class="scene-btn" type="button">↑ טון</button>
+    <button id="rollDownBtn" class="scene-btn" type="button">↓ טון</button>
+    <button id="rollOctUpBtn" class="scene-btn" type="button">↑ אוקטבה</button>
+    <button id="rollOctDownBtn" class="scene-btn" type="button">↓ אוקטבה</button>
+    <button id="rollRetroBtn" class="scene-btn" type="button">רטרוגרד ⟲</button>
+    <button id="rollInvertBtn" class="scene-btn" type="button">היפוך ◇</button>
+    <button id="rollRandBtn" class="scene-btn" type="button">אקראי ✦</button>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">שפת ההרמוניה · סולם ומשטח אקורדים</span>
     <div class="dial">
       <label for="harmonyKeySelect">שורש</label>
@@ -741,7 +752,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3892,14 +3903,114 @@ function drawSpectrumBars() {
   spectrumCtx.shadowBlur = 0;
 }
 
+function scaleLenLocal() {
+  var intervals = HARMONY_SCALES[harmonyScaleType];
+
+  return intervals ? intervals.length : 5;
+}
+
+function transposeRollLocal(roll, degrees) {
+  var maxDeg = scaleLenLocal() * 2 - 1;
+
+  return roll.map(function (d) {
+    if (d < 0) return d;
+
+    return Math.max(0, Math.min(maxDeg, d + degrees));
+  });
+}
+
+function reverseRollLocal(roll) {
+  return roll.slice().reverse();
+}
+
+function invertRollLocal(roll) {
+  var active = roll.filter(function (d) { return d >= 0; });
+
+  if (active.length === 0) return roll.slice();
+
+  var min = Math.min.apply(null, active);
+  var max = Math.max.apply(null, active);
+  var axis = Math.floor((min + max) / 2);
+
+  return roll.map(function (d) {
+    return d < 0 ? d : axis * 2 - d;
+  });
+}
+
+function randomRollLocal() {
+  var maxDeg = scaleLenLocal() * 2 - 1;
+  var out = [];
+
+  for (var i = 0; i < 16; i++) {
+    out.push(Math.random() < 0.6 ? Math.floor(Math.random() * (maxDeg + 1)) : -1);
+  }
+
+  return out;
+}
+
+function applyRollTransform(transformFn, message) {
+  var before = JSON.stringify(leadRoll);
+  var transformed = transformFn(leadRoll);
+
+  if (JSON.stringify(transformed) === before) {
+    statusLine.textContent = 'המגילה כבר שם ✦ שום דבר לא השתנה';
+    return;
+  }
+
+  pushGridHistory();
+  leadRoll = transformed;
+  buildRollPanel();
+  broadcastGrid();
+  statusLine.textContent = message;
+}
+
+var rollUpBtn = document.getElementById('rollUpBtn');
+var rollDownBtn = document.getElementById('rollDownBtn');
+var rollOctUpBtn = document.getElementById('rollOctUpBtn');
+var rollOctDownBtn = document.getElementById('rollOctDownBtn');
+var rollRetroBtn = document.getElementById('rollRetroBtn');
+var rollInvertBtn = document.getElementById('rollInvertBtn');
+var rollRandBtn = document.getElementById('rollRandBtn');
+
+rollUpBtn.addEventListener('click', function () {
+  applyRollTransform(function (roll) { return transposeRollLocal(roll, 1); }, 'הרול עלה טון ✦');
+});
+
+rollDownBtn.addEventListener('click', function () {
+  applyRollTransform(function (roll) { return transposeRollLocal(roll, -1); }, 'הרול ירד טון ✦');
+});
+
+rollOctUpBtn.addEventListener('click', function () {
+  applyRollTransform(function (roll) { return transposeRollLocal(roll, scaleLenLocal()); }, 'הרול עלה אוקטבה ✦');
+});
+
+rollOctDownBtn.addEventListener('click', function () {
+  applyRollTransform(function (roll) { return transposeRollLocal(roll, -scaleLenLocal()); }, 'הרול ירד אוקטבה ✦');
+});
+
+rollRetroBtn.addEventListener('click', function () {
+  applyRollTransform(reverseRollLocal, 'הרול התהפך לאחור ⟲ הזמן נע הפוך');
+});
+
+rollInvertBtn.addEventListener('click', function () {
+  applyRollTransform(invertRollLocal, 'הרול השתקף סביב הציר ◇ המלודיה במראה');
+});
+
+rollRandBtn.addEventListener('click', function () {
+  applyRollTransform(randomRollLocal, 'הישות כתבה מלודיה חדשה ✦');
+});
+
 function degreeToMidiLocal(degree) {
   if (degree < 0) return null;
 
   var intervals = HARMONY_SCALES[harmonyScaleType];
 
-  if (!intervals || degree >= intervals.length) return null;
+  if (!intervals || intervals.length === 0) return null;
 
-  return Math.max(0, Math.min(127, harmonyKey + intervals[degree]));
+  var octave = Math.floor(degree / intervals.length);
+  var idx = degree % intervals.length;
+
+  return Math.max(0, Math.min(127, harmonyKey + octave * 12 + intervals[idx]));
 }
 
 function sendRollMidi(stepIndex, when) {
