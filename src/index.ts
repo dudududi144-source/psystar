@@ -52,6 +52,7 @@ export * from './engine/session.ts';
 export * from './engine/metronome.ts';
 export * from './engine/arpeggiator.ts';
 export * from './engine/midi-melody.ts';
+export * from './engine/midi-file.ts';
 export * from './engine/mastering.ts';
 export * from './engine/metering.ts';
 export * from './engine/stems.ts';
