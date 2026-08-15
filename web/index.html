@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 43 · איקיו מאסטר · עיצוב הגוון</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 44 · מהלכים ניידים · יצוא ויבוא</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -836,6 +836,9 @@ select option { background: #12082b; color: #fff; }
       </select>
     </div>
     <button id="genProgBtn" class="orb ghost" type="button">חולל מהלך 🎲</button>
+    <button id="progExportBtn" class="orb ghost" type="button">יצוא מהלך ⬇</button>
+    <button id="progImportBtn" class="orb ghost" type="button">יבוא מהלך ⬆</button>
+    <input id="progImportInput" type="file" accept=".json,application/json" style="display:none;"/>
     <span id="progNow" style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); direction: ltr; letter-spacing: 0.05em;"></span>
   </section>
 
@@ -878,7 +881,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -4257,7 +4260,7 @@ function generateProgressionLocal(length) {
 genProgBtn.addEventListener('click', function () {
   customProgDegrees = generateProgressionLocal(Number(genLenSelect.value) || 8);
   progSelect.value = 'generated';
-  progNowEl.textContent = 'מהלך מחולל ✦ ' + customProgDegrees.join('-');
+  progNowEl.textContent = 'מהלך מחולל ✦ ' + progressionLabelLocal(customProgDegrees);
   statusLine.textContent = 'מהלך חדש נולד ✦ ' + customProgDegrees.join('-') + ' · לחצו נגינת מהלך';
 });
 
@@ -6020,6 +6023,118 @@ eqHighRange.addEventListener('input', function () {
   eqHighDb = Number(eqHighRange.value);
   eqHighValueEl.textContent = eqHighRange.value;
   applyEqLocal();
+});
+
+var progExportBtn = document.getElementById('progExportBtn');
+var progImportBtn = document.getElementById('progImportBtn');
+var progImportInput = document.getElementById('progImportInput');
+
+var MAJOR_QUALITIES_LOCAL = ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim'];
+var MINOR_QUALITIES_LOCAL = ['min', 'dim', 'maj', 'min', 'min', 'maj', 'maj'];
+
+function degreeRomanLocal(degree, isMinor) {
+  if (degree < 1 || degree > 7) return '?';
+
+  var romans = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  var qualities = isMinor ? MINOR_QUALITIES_LOCAL : MAJOR_QUALITIES_LOCAL;
+  var quality = qualities[degree - 1];
+  var roman = romans[degree - 1];
+
+  if (quality === 'min') return roman.toLowerCase();
+  if (quality === 'dim') return roman.toLowerCase() + '°';
+
+  return roman;
+}
+
+function currentScaleIsMinor() {
+  return harmonyScaleType === 'naturalMinor' || harmonyScaleType === 'phrygian' || harmonyScaleType === 'dorian';
+}
+
+function progressionLabelLocal(degrees) {
+  var isMinor = currentScaleIsMinor();
+
+  return degrees
+    .map(function (d) {
+      return degreeRomanLocal(d, isMinor);
+    })
+    .join(' → ');
+}
+
+function currentProgDegrees() {
+  if (progSelect.value === 'generated') return customProgDegrees;
+
+  return CONSOLE_PROGRESSIONS[progSelect.value] || [];
+}
+
+function degreesValid(degrees) {
+  if (!Array.isArray(degrees) || degrees.length === 0) return false;
+
+  for (var di = 0; di < degrees.length; di++) {
+    var d = degrees[di];
+
+    if (typeof d !== 'number' || !isFinite(d)) return false;
+    if (Math.floor(d) !== d) return false;
+    if (d < 1 || d > 7) return false;
+  }
+
+  return true;
+}
+
+progExportBtn.addEventListener('click', function () {
+  var degrees = currentProgDegrees();
+
+  if (!degreesValid(degrees)) {
+    statusLine.textContent = 'אין מהלך לייצוא ✦ בחרו מהלך או חוללו אחד';
+    return;
+  }
+
+  var label = progSelect.value === 'generated' ? 'generated' : progSelect.value;
+  var payload = JSON.stringify({ version: 1, name: label, degrees: degrees });
+  var blob = new Blob([payload], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-progression.json';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'המהלך יוצא ✦ ' + progressionLabelLocal(degrees);
+});
+
+progImportBtn.addEventListener('click', function () {
+  progImportInput.click();
+});
+
+progImportInput.addEventListener('change', function () {
+  var file = progImportInput.files && progImportInput.files[0];
+
+  if (!file) return;
+
+  var reader = new FileReader();
+
+  reader.onload = function () {
+    try {
+      var parsed = JSON.parse(String(reader.result));
+
+      if (!parsed || parsed.version !== 1 || !degreesValid(parsed.degrees)) {
+        statusLine.textContent = 'קובץ המהלך לא תקין ✦ היבוא נדחה';
+        return;
+      }
+
+      customProgDegrees = parsed.degrees.slice();
+      progSelect.value = 'generated';
+      progNowEl.textContent = 'מהלך מיובא ✦ ' + progressionLabelLocal(customProgDegrees);
+      statusLine.textContent = 'מהלך יובא ✦ ' + progressionLabelLocal(customProgDegrees) + ' · לחצו נגינת מהלך';
+    } catch (err) {
+      statusLine.textContent = 'קובץ המהלך לא תקין ✦ היבוא נדחה';
+    }
+  };
+
+  reader.readAsText(file);
+  progImportInput.value = '';
 });
 
 var midiEnabled = false;
