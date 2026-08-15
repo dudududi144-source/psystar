@@ -39,5 +39,5 @@ export function estimateMakeupGainDb(thresholdDb: number, ratio: number): number
   var t = Math.max(THRESHOLD_DB_MIN, Math.min(THRESHOLD_DB_MAX, thresholdDb));
   var r = Math.max(RATIO_MIN, Math.min(RATIO_MAX, ratio));
 
-  return -t * (1 - 1 / r) * 0.6;
+  return -t * (1 - 1 / r) * 0.6 + 0;
 }
