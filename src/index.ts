@@ -24,6 +24,7 @@ export * from './domain/variation.ts';
 export * from './domain/voicing.ts';
 export * from './domain/roll-transform.ts';
 export * from './domain/progression-gen.ts';
+export * from './domain/progression-store.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
 export * from './engine/audio-driver.ts';
