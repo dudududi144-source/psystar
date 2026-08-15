@@ -403,6 +403,68 @@ select option { background: #12082b; color: #fff; }
   transform: translate(-50%, -50%);
   box-shadow: 0 0 6px currentColor;
 }
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 2, 15, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+}
+
+.help-overlay.open { display: flex; }
+
+.help-card {
+  width: min(560px, 92vw);
+  max-height: 84vh;
+  overflow: auto;
+  background: rgba(20, 10, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 0 0 60px rgba(123, 47, 247, 0.4);
+}
+
+.help-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffd166;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.help-group-title {
+  color: #00f0ff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin: 16px 0 8px;
+}
+
+.help-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.9rem;
+}
+
+.help-key {
+  direction: ltr;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  color: #ff2bd6;
+}
+
+.help-close {
+  display: block;
+  margin: 20px auto 0;
+}
 </style>
 </head>
 <body>
@@ -416,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 49 · ציר הזמן של המסע · רואים את הדרך</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 50 · מפת הקיצורים · כל המכונה בידיים</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -442,6 +504,7 @@ select option { background: #12082b; color: #fff; }
     </div>
 
     <button id="dmtBtn" class="orb" type="button">מצב DMT</button>
+    <button id="helpBtn" class="orb ghost" type="button">קיצורים ?</button>
     <button id="metronomeBtn" class="orb ghost" type="button">מטרונום ♩</button>
     <div class="dial">
       <label for="countInSelect">ספירה</label>
@@ -942,7 +1005,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6472,6 +6535,39 @@ function renderJourneyTimeline() {
   });
 }
 
+var helpOverlay = document.getElementById('helpOverlay');
+var helpBtn = document.getElementById('helpBtn');
+var helpCloseBtn = document.getElementById('helpCloseBtn');
+
+function openHelp() {
+  if (helpOverlay) helpOverlay.classList.add('open');
+}
+
+function closeHelp() {
+  if (helpOverlay) helpOverlay.classList.remove('open');
+}
+
+helpBtn.addEventListener('click', openHelp);
+helpCloseBtn.addEventListener('click', closeHelp);
+
+if (helpOverlay) {
+  helpOverlay.addEventListener('click', function (e) {
+    if (e.target === helpOverlay) closeHelp();
+  });
+}
+
+window.addEventListener('keydown', function (e) {
+  var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if (e.key === '?') {
+    e.preventDefault();
+    openHelp();
+  } else if (e.key === 'Escape') {
+    closeHelp();
+  }
+});
+
 var midiEnabled = false;
 var midiOutput = null;
 
@@ -6869,5 +6965,24 @@ rebuildMorphSelects();
 refreshDreamSelect();
 requestAnimationFrame(animationLoop);
 </script>
+<div id="helpOverlay" class="help-overlay" role="dialog" aria-modal="true" aria-label="קיצורי מקלדת">
+    <div class="help-card">
+      <div class="help-title">מפת הקיצורים ✦ כל המכונה בידיים</div>
+      <div class="help-group-title">מקלדת</div>
+      <div class="help-row"><span>הפעלה / עצירה</span><span class="help-key">Space</span></div>
+      <div class="help-row"><span>נגינת ערוצים חיה</span><span class="help-key">1-4</span></div>
+      <div class="help-row"><span>נגינת תווים</span><span class="help-key">A-K</span></div>
+      <div class="help-row"><span>ביטול</span><span class="help-key">Ctrl+Z</span></div>
+      <div class="help-row"><span>ביצוע מחדש</span><span class="help-key">Ctrl+Shift+Z / Ctrl+Y</span></div>
+      <div class="help-row"><span>פתיחת עזרה זו</span><span class="help-key">?</span></div>
+      <div class="help-row"><span>סגירת העזרה</span><span class="help-key">Esc</span></div>
+      <div class="help-group-title">עכבר</div>
+      <div class="help-row"><span>אקסנט על תא</span><span class="help-key">Shift+קליק</span></div>
+      <div class="help-row"><span>הסתברות על תא</span><span class="help-key">קליק ימני</span></div>
+      <div class="help-row"><span>טרנספוזיציה במגילה</span><span class="help-key">Alt+קליק</span></div>
+      <button id="helpCloseBtn" class="orb ghost help-close" type="button">סגירה ✕</button>
+    </div>
+  </div>
+
 </body>
 </html>
