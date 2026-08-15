@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-45%2F45-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-46%2F46-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
@@ -54,6 +54,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - איקיו מאסטר: שלושה פסים חיים (בס/אמצע/גבוה) שמעצבים את הגוון — גם בנגינה וגם ביצוא
 - מהלכים ניידים: יצוא ויבוא מהלכים כ-JSON עם תוויות רומיות אותנטיות — ההרמוניה נודדת בין מכונות
 - שליטה פיזית במאסטרינג: למידת MIDI CC לכל שרשרת המאסטרינג — חמש-עשרה מטרות סה"כ, חומרה ותוכנה שולטות יחד
+- תבניות גרוב: Four-on-the-Floor, Backbeat, Offbeat Pulse ו-Half-Time עם מצבי מיזוג — הקצב מקבל תחושה אנושית
 - טבעת ספקטרום חיה סביב הקיילודוסקופ
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
