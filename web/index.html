@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 51 · יצוא MIDI · התבנית יוצאת לכל DAW</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 52 · יצוא מהלך MIDI · האקורדים יוצאים ל-DAW</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -772,6 +772,7 @@ select option { background: #12082b; color: #fff; }
     <button id="wavExportBtn" class="orb gold" type="button">עיבוד והורדה ⬇</button>
     <button id="stemExportBtn" class="orb ghost" type="button">יצוא סטמים ⬇</button>
     <button id="midiExportBtn" class="orb ghost" type="button">יצוא MIDI ⬇</button>
+    <button id="progMidiExportBtn" class="orb ghost" type="button">יצוא מהלך MIDI ⬇</button>
     <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">כולל מגילה, הרמוניה, עוצמות, אקסנטים ונשימה אנושית</span>
   </section>
 
@@ -1006,7 +1007,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6697,6 +6698,56 @@ function exportMidiFile() {
 }
 
 midiExportBtn.addEventListener('click', exportMidiFile);
+
+var progMidiExportBtn = document.getElementById('progMidiExportBtn');
+
+function exportProgressionMidi() {
+  var degrees = progSelect.value === 'generated' ? customProgDegrees : CONSOLE_PROGRESSIONS[progSelect.value];
+
+  if (!degrees || degrees.length === 0) {
+    statusLine.textContent = 'אין מהלך לייצוא ✦ בחרו מהלך קודם';
+    return;
+  }
+
+  var ticksPerQuarter = 480;
+  var ticksPerStep = Math.floor(ticksPerQuarter / 4);
+  var ticksPerBar = ticksPerStep * 16;
+  var barsPerChord = Number(progBarsSelect.value) || 1;
+  var chordDurTicks = barsPerChord * ticksPerBar;
+  var voicing = progVoicingSelect.value;
+  var events = [];
+
+  for (var i = 0; i < degrees.length; i++) {
+    var chord = harmonyDiatonicChord(harmonyKey, harmonyScaleType, degrees[i]);
+    var voiced = applyVoicingLocal(chord, voicing);
+    var startTick = i * chordDurTicks;
+
+    for (var ni = 0; ni < voiced.length; ni++) {
+      events.push({ tick: startTick, note: voiced[ni], velocity: 90, duration: chordDurTicks - 1 });
+    }
+  }
+
+  if (events.length === 0) {
+    statusLine.textContent = 'אין אקורדים לייצוא ✦ בדקו את המהלך';
+    return;
+  }
+
+  var bytes = buildMidiFileLocal(events, ticksPerQuarter);
+  var blob = new Blob([new Uint8Array(bytes)], { type: 'audio/midi' });
+  var url = URL.createObjectURL(blob);
+  var anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'psystar-progression.mid';
+  anchor.click();
+
+  setTimeout(function () {
+    URL.revokeObjectURL(url);
+  }, 3000);
+
+  statusLine.textContent = 'מהלך MIDI יוצא ✦ ' + degrees.length + ' אקורדים לכל DAW';
+}
+
+progMidiExportBtn.addEventListener('click', exportProgressionMidi);
 
 var midiEnabled = false;
 var midiOutput = null;
