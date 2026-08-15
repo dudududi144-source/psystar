@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 53 · הקלטה חיה · ההופעה נשמרת כ-WAV</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 54 · פריסטים למאסטרינג · הגוון נשמר</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -733,6 +733,11 @@ select option { background: #12082b; color: #fff; }
       <input id="eqHighRange" type="range" min="-12" max="12" value="0"/>
       <span id="eqHighValue">0</span>
     </div>
+    <div class="dial">
+      <label for="masteringPresetSelect">פריסט</label>
+      <select id="masteringPresetSelect"></select>
+    </div>
+    <button id="saveMasteringPresetBtn" class="orb ghost" type="button">שמירה כפריסט ✧</button>
   </section>
 
   <section class="rack" style="flex-direction: column; align-items: stretch;">
@@ -1008,7 +1013,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -6886,6 +6891,82 @@ liveRecordBtn.addEventListener('click', function () {
     startLiveRecording();
   }
 });
+
+var masteringPresets = [
+  { name: 'שטוח', masterDb: -2, eqLowDb: 0, eqMidDb: 0, eqHighDb: 0, compThreshold: -14, compRatio: 8 },
+  { name: 'חם', masterDb: -2, eqLowDb: 4, eqMidDb: -1, eqHighDb: -3, compThreshold: -16, compRatio: 6 },
+  { name: 'בהיר', masterDb: -2, eqLowDb: -2, eqMidDb: 1, eqHighDb: 5, compThreshold: -14, compRatio: 8 },
+  { name: 'דחוס', masterDb: -1, eqLowDb: 0, eqMidDb: 0, eqHighDb: 0, compThreshold: -24, compRatio: 14 },
+  { name: 'מרווח', masterDb: -4, eqLowDb: 1, eqMidDb: -2, eqHighDb: 2, compThreshold: -10, compRatio: 4 }
+];
+
+var masteringPresetSelect = document.getElementById('masteringPresetSelect');
+var saveMasteringPresetBtn = document.getElementById('saveMasteringPresetBtn');
+
+function refreshMasteringPresetSelect() {
+  masteringPresetSelect.innerHTML = '';
+
+  masteringPresets.forEach(function (p, idx) {
+    var opt = document.createElement('option');
+    opt.value = String(idx);
+    opt.textContent = p.name;
+    masteringPresetSelect.appendChild(opt);
+  });
+}
+
+function applyMasteringPreset(preset) {
+  masterDb = preset.masterDb;
+  eqLowDb = preset.eqLowDb;
+  eqMidDb = preset.eqMidDb;
+  eqHighDb = preset.eqHighDb;
+  compThreshold = preset.compThreshold;
+  compRatio = preset.compRatio;
+
+  masterDbRange.value = String(masterDb);
+  masterDbValueEl.textContent = String(masterDb);
+  eqLowRange.value = String(eqLowDb);
+  eqLowValueEl.textContent = String(eqLowDb);
+  eqMidRange.value = String(eqMidDb);
+  eqMidValueEl.textContent = String(eqMidDb);
+  eqHighRange.value = String(eqHighDb);
+  eqHighValueEl.textContent = String(eqHighDb);
+  compThresholdRange.value = String(compThreshold);
+  compThresholdValueEl.textContent = String(compThreshold);
+  compRatioRange.value = String(compRatio);
+  compRatioValueEl.textContent = String(compRatio) + ':1';
+
+  applyMasteringLocal();
+  applyEqLocal();
+
+  statusLine.textContent = 'פריסט מאסטרינג הוחל ✦ ' + preset.name;
+}
+
+masteringPresetSelect.addEventListener('change', function () {
+  var idx = Number(masteringPresetSelect.value);
+
+  if (masteringPresets[idx]) {
+    applyMasteringPreset(masteringPresets[idx]);
+  }
+});
+
+saveMasteringPresetBtn.addEventListener('click', function () {
+  var preset = {
+    name: 'פריסט ' + (masteringPresets.length - 4),
+    masterDb: masterDb,
+    eqLowDb: eqLowDb,
+    eqMidDb: eqMidDb,
+    eqHighDb: eqHighDb,
+    compThreshold: compThreshold,
+    compRatio: compRatio
+  };
+
+  masteringPresets.push(preset);
+  refreshMasteringPresetSelect();
+  masteringPresetSelect.value = String(masteringPresets.length - 1);
+  statusLine.textContent = 'פריסט נשמר ✦ ' + preset.name;
+});
+
+refreshMasteringPresetSelect();
 
 var midiEnabled = false;
 var midiOutput = null;
