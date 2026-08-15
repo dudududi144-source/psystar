@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 46 · תבניות גרוב · תחושת קצב</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 47 · חלימה אוטומטית · המכונה חולמת לבד</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -738,6 +738,20 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">חלימה אוטומטית · המכונה חולמת לבד</span>
+    <button id="autoDreamBtn" class="orb gold" type="button">חלימה אוטומטית ☾</button>
+    <div class="dial">
+      <label for="dreamIntervalSelect">חלום כל</label>
+      <select id="dreamIntervalSelect">
+        <option value="2">2 תיבות</option>
+        <option value="4" selected>4 תיבות</option>
+        <option value="8">8 תיבות</option>
+      </select>
+    </div>
+    <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5);">דורש לפחות שני חלומות שמורים בספרייה</span>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">תבניות גרוב · תחושת קצב</span>
     <button id="grooveBtn0" class="scene-btn" type="button">Four-on-the-Floor</button>
     <button id="grooveBtn1" class="scene-btn" type="button">Backbeat</button>
@@ -897,7 +911,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -2209,6 +2223,7 @@ function scheduleLoop() {
     arrangerTick();
     progressionTick();
     autopilotTick();
+    autoDreamTick();
 
     nextStep = (nextStep + 1) % STEPS;
     nextStepTime += secondsPerStep();
@@ -2231,6 +2246,7 @@ function startEngine() {
   arrangerSteps = 0;
   progSteps = 0;
   autopilotSteps = 0;
+  autoDreamSteps = 0;
   foundStepCounter = 0;
   countInTotal = (Number(countInSelect.value) || 0) * 16;
   countInRemaining = countInTotal;
@@ -6248,6 +6264,99 @@ grooveBtn0.addEventListener('click', function () { applyGrooveLocal(0); });
 grooveBtn1.addEventListener('click', function () { applyGrooveLocal(1); });
 grooveBtn2.addEventListener('click', function () { applyGrooveLocal(2); });
 grooveBtn3.addEventListener('click', function () { applyGrooveLocal(3); });
+
+var autoDreamActive = false;
+var autoDreamInterval = 4;
+var autoDreamSteps = 0;
+var autoDreamTargetIdx = -1;
+
+var autoDreamBtn = document.getElementById('autoDreamBtn');
+var dreamIntervalSelect = document.getElementById('dreamIntervalSelect');
+
+function nextDreamTargetLocal(current, count) {
+  if (count <= 1) return current;
+
+  var candidate = Math.floor(Math.random() * count);
+
+  if (candidate === current) {
+    candidate = (candidate + 1) % count;
+  }
+
+  return candidate;
+}
+
+function morphGridLocal(a, b, t) {
+  return a.map(function (rowA, r) {
+    var rowB = Array.isArray(b[r]) ? b[r] : [];
+
+    return rowA.map(function (cellA, c) {
+      var va = cellA ? 1 : 0;
+      var vb = rowB[c] ? 1 : 0;
+
+      return (va + (vb - va) * t) >= 0.5;
+    });
+  });
+}
+
+function dreamNow() {
+  var presets = dreamLibrary.items.filter(function (it) {
+    return it.kind === 'scene';
+  });
+
+  if (presets.length < 2) {
+    statusLine.textContent = 'אין מספיק חלומות ✦ שמרו לפחות שני חלומות בספרייה כדי לחלום';
+    return;
+  }
+
+  var next = nextDreamTargetLocal(autoDreamTargetIdx, presets.length);
+  autoDreamTargetIdx = next;
+
+  try {
+    var targetPreset = JSON.parse(presets[next].payload);
+
+    if (!targetPreset || !Array.isArray(targetPreset.rows)) return;
+
+    pushGridHistory();
+    gridState = morphGridLocal(gridState, targetPreset.rows, 0.5);
+    refreshAllCells();
+    broadcastGrid();
+    statusLine.textContent = 'המכונה חולמת ☾ מתמזגת אל ' + presets[next].name;
+  } catch (err) {}
+}
+
+function autoDreamTick() {
+  if (!autoDreamActive || !running) return;
+
+  autoDreamSteps++;
+
+  if (autoDreamSteps % 16 !== 0) return;
+
+  var bar = autoDreamSteps / 16;
+
+  if (bar === 0 || bar % autoDreamInterval !== 0) return;
+
+  dreamNow();
+}
+
+autoDreamBtn.addEventListener('click', function () {
+  autoDreamActive = !autoDreamActive;
+  autoDreamBtn.classList.toggle('active', autoDreamActive);
+
+  if (autoDreamActive) {
+    autoDreamSteps = 0;
+    autoDreamTargetIdx = -1;
+
+    if (!running) startEngine();
+
+    statusLine.textContent = 'חלימה אוטומטית פעילה ☾ המכונה תחלום כל ' + autoDreamInterval + ' תיבות';
+  } else {
+    statusLine.textContent = 'החלימה נעצרה ✦ המכונה חוזרת אליך';
+  }
+});
+
+dreamIntervalSelect.addEventListener('change', function () {
+  autoDreamInterval = Number(dreamIntervalSelect.value);
+});
 
 var midiEnabled = false;
 var midiOutput = null;
