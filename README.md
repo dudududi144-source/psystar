@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-38%2F38-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-39%2F39-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
@@ -47,6 +47,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - MIDI מלא: תופים בערוץ 1, מלודיית הרול בערוץ 2, אקורדי המהלך בערוץ 3 — כל היצירה יוצאת החוצה
 - טרנספורמציות רול: טון, אוקטבה, רטרוגרד, היפוך ואקראי — כל מלודיה היא כבר שבעה שירים
 - מחולל מהלכים: הילוך הרמוני פונקציונלי עם קדנציות — כל לחיצה מולידה מהלך חדש שאף אחד לא שמע לפני כן
+- מאסטרינג: מאסטר dB, סף קומפרסיה ויחס בשליטה חיה — הסאונד מוגש כמו תקליט
 - טבעת ספקטרום חיה סביב הקיילודוסקופ
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
