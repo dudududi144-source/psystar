@@ -19,3 +19,16 @@ export function noteOnFor(channel: number, note: number, velocity: number): numb
 export function noteOffFor(channel: number, note: number): number[] {
   return [0x80 | (channel & 0x0f), note & 0x7f, 0x40];
 }
+
+
+export function degreeToMidiExtended(degree: number, scaleIntervals: number[], keyMidi: number): number | null {
+  if (degree < 0) return null;
+  if (!Array.isArray(scaleIntervals) || scaleIntervals.length === 0) return null;
+
+  var octave = Math.floor(degree / scaleIntervals.length);
+  var idx = degree % scaleIntervals.length;
+
+  var note = Math.floor(keyMidi) + octave * 12 + Math.floor(scaleIntervals[idx]);
+
+  return Math.max(0, Math.min(127, note));
+}
