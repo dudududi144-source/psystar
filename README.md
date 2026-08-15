@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-53%2F53-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-54%2F54-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
@@ -62,6 +62,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - יצוא MIDI: התבנית יוצאת כקובץ .mid תקני עם מהירות ומשכים — נפתח בכל DAW
 - יצוא מהלך MIDI: המהלך ההרמוני יוצא כ-MIDI עם voicing ומשכים — גם האקורדים חיים ב-DAW
 - הקלטה חיה: לוכדת את המאסטר עם כל האפקטים בזמן אמת ומוציאה WAV — ההופעה נשמרת
+- פריסטים למאסטרינג: שמירה ושחזור של כל הגדרות האודיו כפריסט אחד — הגוון נשמר
 - טבעת ספקטרום חיה סביב הקיילודוסקופ
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
