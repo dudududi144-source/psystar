@@ -5,7 +5,8 @@ import {
   MIDI_CHORD_CHANNEL,
   degreeToMidi,
   noteOnFor,
-  noteOffFor
+  noteOffFor,
+  degreeToMidiExtended
 } from '../src/engine/midi-melody.ts';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
@@ -42,4 +43,21 @@ test('noteOnFor builds status byte per channel with velocity clamp', () => {
 test('noteOffFor builds note-off bytes', () => {
   expect(noteOffFor(1, 60)).toEqual([0x81, 60, 0x40]);
   expect(noteOffFor(15, 0)).toEqual([0x8f, 0, 0x40]);
+});
+
+
+test('degreeToMidiExtended maps degrees across octaves', () => {
+  const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+
+  expect(degreeToMidiExtended(0, MAJOR, 60)).toBe(60);
+  expect(degreeToMidiExtended(7, MAJOR, 60)).toBe(72);
+  expect(degreeToMidiExtended(9, MAJOR, 60)).toBe(76);
+  expect(degreeToMidiExtended(14, MAJOR, 60)).toBe(84);
+});
+
+test('degreeToMidiExtended guards negative degrees and clamps high', () => {
+  const MAJOR = [0, 2, 4, 5, 7, 9, 11];
+
+  expect(degreeToMidiExtended(-1, MAJOR, 60)).toBeNull();
+  expect(degreeToMidiExtended(200, MAJOR, 60)).toBe(127);
 });
