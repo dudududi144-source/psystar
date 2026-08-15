@@ -384,6 +384,25 @@ select option { background: #12082b; color: #fff; }
   margin-bottom: 12px;
   background: #05020f;
 }
+.journey-timeline {
+  position: relative;
+  height: 26px;
+  margin-top: 8px;
+  border-radius: 13px;
+  background: rgba(5, 2, 15, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.timeline-dot {
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px currentColor;
+}
 </style>
 </head>
 <body>
@@ -397,7 +416,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 48 · לגאטו · אקורדים שנמרחים בזמן</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 49 · ציר הזמן של המסע · רואים את הדרך</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -694,6 +713,7 @@ select option { background: #12082b; color: #fff; }
 
   <section class="rack">
     <span class="rack-title">זיכרון המסע · יומן · יצוא · יבוא</span>
+    <div id="journeyTimeline" class="journey-timeline"></div>
     <button id="journeyBtn" class="orb ghost" type="button">יומן מסע ●</button>
     <button id="replayBtn" class="orb ghost" type="button">ניגון יומן ✦</button>
     <button id="exportBtn" class="orb ghost" type="button">יצוא סצנה ⬇</button>
@@ -922,7 +942,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -4796,6 +4816,7 @@ journeyImportInput.addEventListener('change', function () {
 
       journeyEvents = validEvents;
       statusLine.textContent = 'יומן יובא ✦ ' + journeyEvents.length + ' אירועים · לחצו ניגון יומן';
+      renderJourneyTimeline();
     } catch (err) {
       statusLine.textContent = 'קובץ היומן לא תקין ✦ היבוא נדחה';
     }
@@ -5704,6 +5725,7 @@ journeyBtn.addEventListener('click', function () {
     statusLine.textContent = 'יומן המסע חמוש ● כל צעד וסצנה ייזכרו';
   } else {
     statusLine.textContent = 'היומן נשמר בזיכרון ✦ ' + journeyEvents.length + ' אירועים מחכים לניגון';
+    renderJourneyTimeline();
   }
 });
 
@@ -6402,6 +6424,53 @@ legatoRange.addEventListener('input', function () {
   legatoAmount = Number(legatoRange.value) / 100;
   legatoValueEl.textContent = legatoRange.value + '%';
 });
+
+var journeyTimelineEl = document.getElementById('journeyTimeline');
+
+var TIMELINE_COLORS = { step: '#00f0ff', scene: '#ff2bd6' };
+
+function journeyDurationLocal(events) {
+  if (!Array.isArray(events) || events.length === 0) return 0;
+
+  var max = 0;
+
+  for (var i = 0; i < events.length; i++) {
+    if (events[i].time > max) max = events[i].time;
+  }
+
+  return max;
+}
+
+function renderJourneyTimeline() {
+  if (!journeyTimelineEl) return;
+
+  journeyTimelineEl.innerHTML = '';
+
+  var duration = journeyDurationLocal(journeyEvents);
+
+  if (duration <= 0) return;
+
+  var markers = journeyEvents.map(function (e) {
+    return {
+      position: Math.max(0, Math.min(1, e.time / duration)),
+      type: e.type,
+      time: e.time
+    };
+  });
+
+  markers.sort(function (a, b) {
+    return a.time - b.time;
+  });
+
+  markers.forEach(function (m) {
+    var dot = document.createElement('span');
+    dot.className = 'timeline-dot';
+    dot.style.left = (m.position * 100).toFixed(2) + '%';
+    dot.style.background = TIMELINE_COLORS[m.type] || '#ffd166';
+    dot.style.color = TIMELINE_COLORS[m.type] || '#ffd166';
+    journeyTimelineEl.appendChild(dot);
+  });
+}
 
 var midiEnabled = false;
 var midiOutput = null;
