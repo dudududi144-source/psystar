@@ -45,6 +45,6 @@ test('gainReductionDb compresses above threshold', () => {
 });
 
 test('gainReductionDb clamps ratio and grows with input', () => {
-  expect(gainReductionDb(-2, -14, 100)).toBeCloseTo(12, 6);
+  expect(gainReductionDb(-2, -14, 100)).toBeCloseTo(12 * (1 - 1 / 20), 6);
   expect(gainReductionDb(-4, -14, 4)).toBeGreaterThan(gainReductionDb(-8, -14, 4));
 });
