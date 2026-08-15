@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 45 · שליטה פיזית במאסטרינג</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 46 · תבניות גרוב · תחושת קצב</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -738,6 +738,22 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">תבניות גרוב · תחושת קצב</span>
+    <button id="grooveBtn0" class="scene-btn" type="button">Four-on-the-Floor</button>
+    <button id="grooveBtn1" class="scene-btn" type="button">Backbeat</button>
+    <button id="grooveBtn2" class="scene-btn" type="button">Offbeat Pulse</button>
+    <button id="grooveBtn3" class="scene-btn" type="button">Half-Time</button>
+    <div class="dial">
+      <label for="grooveModeSelect">מיזוג</label>
+      <select id="grooveModeSelect">
+        <option value="replace">החלפה</option>
+        <option value="or">איחוד</option>
+        <option value="and">חיתוך</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">וריאציות · הופעה חיה</span>
     <button id="varBtn0" class="scene-btn" type="button">A</button>
     <button id="varBtn1" class="scene-btn" type="button">B</button>
@@ -881,7 +897,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1922,6 +1938,17 @@ function applyFollowerMessage(message) {
         }
       }
 
+      var accentData = message.payload.accents;
+      if (Array.isArray(accentData) && accentData.length === ROWS.length) {
+        for (var aar = 0; aar < ROWS.length; aar++) {
+          if (Array.isArray(accentData[aar]) && accentData[aar].length === 16) {
+            for (var aac = 0; aac < 16; aac++) {
+              accentGrid[aar][aac] = accentData[aar][aac] === true;
+            }
+          }
+        }
+      }
+
       refreshAllCells();
       markActiveScene(-1);
       markActivePreset(-1);
@@ -1961,8 +1988,8 @@ function updatePeerCount() {
 }
 
 function broadcastGrid() {
-  postSync('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid });
-  sendP2p('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid });
+  postSync('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid, accents: accentGrid });
+  sendP2p('grid', { rows: gridState, velocity: velocityGrid, roll: leadRoll, probability: probabilityGrid, accents: accentGrid });
 }
 
 var euclidWrap = document.getElementById('euclidRows');
@@ -6142,6 +6169,85 @@ progImportInput.addEventListener('change', function () {
   reader.readAsText(file);
   progImportInput.value = '';
 });
+
+var GROOVE_TEMPLATES_LOCAL = [
+  {
+    name: 'Four-on-the-Floor',
+    accents: [
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],
+      [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0]
+    ]
+  },
+  {
+    name: 'Backbeat',
+    accents: [
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1]
+    ]
+  },
+  {
+    name: 'Offbeat Pulse',
+    accents: [
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0]
+    ]
+  },
+  {
+    name: 'Half-Time',
+    accents: [
+      [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
+    ]
+  }
+];
+
+var grooveModeSelect = document.getElementById('grooveModeSelect');
+var grooveBtn0 = document.getElementById('grooveBtn0');
+var grooveBtn1 = document.getElementById('grooveBtn1');
+var grooveBtn2 = document.getElementById('grooveBtn2');
+var grooveBtn3 = document.getElementById('grooveBtn3');
+
+function applyGrooveLocal(index) {
+  var template = GROOVE_TEMPLATES_LOCAL[index];
+
+  if (!template) return;
+
+  var mode = grooveModeSelect.value;
+
+  pushGridHistory();
+
+  accentGrid = template.accents.map(function (grooveRow, r) {
+    var currentRow = Array.isArray(accentGrid[r]) ? accentGrid[r] : [];
+
+    return grooveRow.map(function (grooveCell, c) {
+      var currentCell = currentRow[c] === true;
+
+      if (mode === 'or') return currentCell || grooveCell === 1;
+      if (mode === 'and') return currentCell && grooveCell === 1;
+
+      return grooveCell === 1;
+    });
+  });
+
+  refreshAllCells();
+  broadcastGrid();
+
+  var modeLabel = mode === 'or' ? 'איחוד' : mode === 'and' ? 'חיתוך' : 'החלפה';
+  statusLine.textContent = 'גרוב הוחל ✦ ' + template.name + ' · ' + modeLabel;
+}
+
+grooveBtn0.addEventListener('click', function () { applyGrooveLocal(0); });
+grooveBtn1.addEventListener('click', function () { applyGrooveLocal(1); });
+grooveBtn2.addEventListener('click', function () { applyGrooveLocal(2); });
+grooveBtn3.addEventListener('click', function () { applyGrooveLocal(3); });
 
 var midiEnabled = false;
 var midiOutput = null;
