@@ -327,6 +327,55 @@ select option { background: #12082b; color: #fff; }
   background: rgba(5, 2, 15, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+.meter-track {
+  position: relative;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.meter-thin { height: 10px; }
+
+.meter-rms {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #00f0ff, #7b2ff7);
+  transition: width 0.08s linear;
+}
+
+.meter-peak {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 0%;
+  background: linear-gradient(90deg, transparent 55%, #ff2bd6);
+  opacity: 0.85;
+}
+
+.meter-hold {
+  position: absolute; top: 0; bottom: 0;
+  left: 0%;
+  width: 2px;
+  background: #ffd166;
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.8);
+}
+
+.meter-reduction {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #ff2bd6, #ff4d4d);
+  transition: width 0.12s linear;
+}
+
+.meter-scale {
+  position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 8px;
+  font-size: 0.6rem; color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  direction: ltr;
+}
 </style>
 </head>
 <body>
@@ -340,7 +389,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 39 · מאסטרינג · הגשת הסאונד</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 40 · מדי עוצמה · רואים את המאסטרינג</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -577,6 +626,25 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  <section class="rack" style="flex-direction: column; align-items: stretch;">
+    <span class="rack-title">מדי עוצמה · מה שהמאסטרינג עושה עכשיו</span>
+    <div class="meter-track">
+      <div id="meterRmsFill" class="meter-rms"></div>
+      <div id="meterPeakFill" class="meter-peak"></div>
+      <div id="meterHold" class="meter-hold"></div>
+      <div class="meter-scale">
+        <span>-60</span><span>-40</span><span>-20</span><span>-6</span><span>0</span><span>+6</span>
+      </div>
+    </div>
+    <div class="meter-track meter-thin">
+      <div id="meterReductionFill" class="meter-reduction"></div>
+      <div class="meter-scale"><span>הפחתת גיין ← 12dB</span></div>
+    </div>
+    <div style="text-align: center; font-size: 0.75rem; color: rgba(255, 255, 255, 0.55);">
+      פיק: <span id="meterDbLabel">-∞</span>
+    </div>
+  </section>
+
   <section class="rack">
     <span class="rack-title">יצוא מסע · אודיו אמיתי WAV</span>
     <div class="dial">
@@ -780,7 +848,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -5685,6 +5753,68 @@ compRatioRange.addEventListener('input', function () {
   applyMasteringLocal();
 });
 
+var timeDomainData = null;
+var meterPeakDb = -60;
+var meterRmsDb = -60;
+var meterReduction = 0;
+var meterPeakHold = -60;
+var meterPeakHoldTime = 0;
+
+function dbToMeterNorm(db) {
+  return Math.max(0, Math.min(1, (db + 60) / 66));
+}
+
+function updateMeter() {
+  if (!analyser) return;
+
+  if (!timeDomainData) {
+    timeDomainData = new Uint8Array(analyser.fftSize);
+  }
+
+  analyser.getByteTimeDomainData(timeDomainData);
+
+  var peak = 0;
+  var sum = 0;
+
+  for (var i = 0; i < timeDomainData.length; i++) {
+    var v = (timeDomainData[i] - 128) / 128;
+    var abs = Math.abs(v);
+
+    if (abs > peak) peak = abs;
+
+    sum += v * v;
+  }
+
+  var rms = Math.sqrt(sum / timeDomainData.length);
+
+  meterPeakDb = peak <= 0.000001 ? -60 : Math.max(-60, Math.min(6, 20 * Math.log10(peak)));
+  meterRmsDb = rms <= 0.000001 ? -60 : Math.max(-60, Math.min(6, 20 * Math.log10(rms)));
+  meterReduction = meterPeakDb > compThreshold ? (meterPeakDb - compThreshold) * (1 - 1 / Math.max(1, compRatio)) : 0;
+
+  if (meterPeakDb > meterPeakHold || performance.now() - meterPeakHoldTime > 1500) {
+    meterPeakHold = meterPeakDb;
+    meterPeakHoldTime = performance.now();
+  }
+
+  renderMeter();
+}
+
+function renderMeter() {
+  var rmsEl = document.getElementById('meterRmsFill');
+  var peakEl = document.getElementById('meterPeakFill');
+  var holdEl = document.getElementById('meterHold');
+  var reductionEl = document.getElementById('meterReductionFill');
+  var dbLabel = document.getElementById('meterDbLabel');
+
+  if (!rmsEl) return;
+
+  rmsEl.style.width = (dbToMeterNorm(meterRmsDb) * 100).toFixed(1) + '%';
+  peakEl.style.width = (dbToMeterNorm(meterPeakDb) * 100).toFixed(1) + '%';
+  holdEl.style.left = (dbToMeterNorm(meterPeakHold) * 100).toFixed(1) + '%';
+  reductionEl.style.width = (Math.min(1, meterReduction / 12) * 100).toFixed(1) + '%';
+  dbLabel.textContent = meterPeakDb <= -59.5 ? '-∞' : meterPeakDb.toFixed(1) + ' dB';
+}
+
 var midiEnabled = false;
 var midiOutput = null;
 
@@ -5866,6 +5996,7 @@ function animationLoop(time) {
   drawCosmos(time);
   drawSpectrum(time);
   drawSpectrumBars();
+  updateMeter();
   voiceLine.textContent = activeVoices + ' קולות פעילים ✦ תקרה ' + MAX_VOICES;
   requestAnimationFrame(animationLoop);
 }
