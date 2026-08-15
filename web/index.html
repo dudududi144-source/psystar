@@ -340,7 +340,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 38 · מחולל מהלכים · הרמוניה גנרטיבית</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 39 · מאסטרינג · הגשת הסאונד</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -559,6 +559,25 @@ select option { background: #12082b; color: #fff; }
   </section>
 
   <section class="rack">
+    <span class="rack-title">מאסטרינג · הגשת הסאונד</span>
+    <div class="dial">
+      <label for="masterDbRange">מאסטר dB</label>
+      <input id="masterDbRange" type="range" min="-24" max="6" value="-2"/>
+      <span id="masterDbValue">-2</span>
+    </div>
+    <div class="dial">
+      <label for="compThresholdRange">סף dB</label>
+      <input id="compThresholdRange" type="range" min="-40" max="0" value="-14"/>
+      <span id="compThresholdValue">-14</span>
+    </div>
+    <div class="dial">
+      <label for="compRatioRange">יחס</label>
+      <input id="compRatioRange" type="range" min="1" max="20" value="8"/>
+      <span id="compRatioValue">8:1</span>
+    </div>
+  </section>
+
+  <section class="rack">
     <span class="rack-title">יצוא מסע · אודיו אמיתי WAV</span>
     <div class="dial">
       <label for="wavBarsSelect">תיבות</label>
@@ -761,7 +780,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1017,7 +1036,7 @@ function initAudio() {
   phaserLfo.start();
 
   masterGain = audioCtx.createGain();
-  masterGain.gain.value = 0.8;
+  masterGain.gain.value = Math.pow(10, Math.max(-60, Math.min(12, masterDb)) / 20);
 
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 256;
@@ -1025,9 +1044,9 @@ function initAudio() {
 
   var limiter = audioCtx.createDynamicsCompressor();
   limiterNode = limiter;
-  limiter.threshold.value = -14;
+  limiter.threshold.value = Math.max(-60, Math.min(0, compThreshold));
   limiter.knee.value = 10;
-  limiter.ratio.value = 8;
+  limiter.ratio.value = Math.max(1, Math.min(20, compRatio));
   limiter.attack.value = 0.004;
   limiter.release.value = 0.24;
 
@@ -5624,6 +5643,48 @@ importInput.addEventListener('change', function () {
 
 var limiterNode = null;
 
+var masterDb = -2;
+var compThreshold = -14;
+var compRatio = 8;
+
+var masterDbRange = document.getElementById('masterDbRange');
+var masterDbValueEl = document.getElementById('masterDbValue');
+var compThresholdRange = document.getElementById('compThresholdRange');
+var compThresholdValueEl = document.getElementById('compThresholdValue');
+var compRatioRange = document.getElementById('compRatioRange');
+var compRatioValueEl = document.getElementById('compRatioValue');
+
+function applyMasteringLocal() {
+  if (!audioCtx) return;
+
+  if (masterGain) {
+    masterGain.gain.value = Math.pow(10, Math.max(-60, Math.min(12, masterDb)) / 20);
+  }
+
+  if (limiterNode) {
+    limiterNode.threshold.value = Math.max(-60, Math.min(0, compThreshold));
+    limiterNode.ratio.value = Math.max(1, Math.min(20, compRatio));
+  }
+}
+
+masterDbRange.addEventListener('input', function () {
+  masterDb = Number(masterDbRange.value);
+  masterDbValueEl.textContent = masterDbRange.value;
+  applyMasteringLocal();
+});
+
+compThresholdRange.addEventListener('input', function () {
+  compThreshold = Number(compThresholdRange.value);
+  compThresholdValueEl.textContent = compThresholdRange.value;
+  applyMasteringLocal();
+});
+
+compRatioRange.addEventListener('input', function () {
+  compRatio = Number(compRatioRange.value);
+  compRatioValueEl.textContent = compRatioRange.value + ':1';
+  applyMasteringLocal();
+});
+
 var midiEnabled = false;
 var midiOutput = null;
 
@@ -5819,6 +5880,9 @@ function captureSessionState() {
     accents: accentGrid.map(function (row) { return row.slice(); }),
     roll: leadRoll.slice(),
     probability: probabilityGrid.map(function (row) { return row.slice(); }),
+    masterDb: masterDb,
+    compThreshold: compThreshold,
+    compRatio: compRatio,
     variations: variationSlots.slice(),
     bpm: bpm,
     swing: swingPercent,
