@@ -397,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 44 · מהלכים ניידים · יצוא ויבוא</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 45 · שליטה פיזית במאסטרינג</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -881,7 +881,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -3877,7 +3877,13 @@ var CC_TARGETS = {
   crush: { el: 'crushRange', min: 0, max: 100, label: 'ריסוק' },
   phaser: { el: 'phaserRange', min: 0, max: 100, label: 'פייזר' },
   delay: { el: 'delayRange', min: 0, max: 100, label: 'הדהוד' },
-  reverb: { el: 'reverbRange', min: 0, max: 100, label: 'מרחב' }
+  reverb: { el: 'reverbRange', min: 0, max: 100, label: 'מרחב' },
+  masterDb: { el: 'masterDbRange', min: -24, max: 6, label: 'מאסטר dB' },
+  compThreshold: { el: 'compThresholdRange', min: -40, max: 0, label: 'סף קומפרסיה' },
+  compRatio: { el: 'compRatioRange', min: 1, max: 20, label: 'יחס קומפרסיה' },
+  eqLow: { el: 'eqLowRange', min: -12, max: 12, label: 'EQ בס' },
+  eqMid: { el: 'eqMidRange', min: -12, max: 12, label: 'EQ אמצע' },
+  eqHigh: { el: 'eqHighRange', min: -12, max: 12, label: 'EQ גבוה' }
 };
 
 var CC_STORAGE_KEY = 'psystar.ccmap.v1';
