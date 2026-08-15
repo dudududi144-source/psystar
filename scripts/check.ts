@@ -96,6 +96,7 @@ const requiredFiles = [
   'tests/mastering.test.ts',
   'tests/metering.test.ts',
   'tests/stems.test.ts',
+  'tests/waterfall.test.ts',
   'tests/transcribe.test.ts',
   'tests/autopilot.test.ts',
   'tests/midi-clock.test.ts',
