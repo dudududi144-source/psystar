@@ -29,6 +29,7 @@ export * from './domain/groove-template.ts';
 export * from './domain/auto-dream.ts';
 export * from './domain/legato.ts';
 export * from './domain/mastering-preset.ts';
+export * from './domain/setlist.ts';
 export * from './domain/journey-timeline.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
