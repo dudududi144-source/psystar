@@ -376,6 +376,14 @@ select option { background: #12082b; color: #fff; }
   pointer-events: none;
   direction: ltr;
 }
+.waterfall {
+  width: 100%;
+  height: 140px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
+  background: #05020f;
+}
 </style>
 </head>
 <body>
@@ -389,7 +397,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 41 · יצוא סטמים · לכל DAW בעולם</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 42 · מפל הספקטרום · העקבות שהצליל משאיר</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -645,6 +653,8 @@ select option { background: #12082b; color: #fff; }
     </div>
   </section>
 
+  <canvas id="waterfallCanvas" class="waterfall" width="1024" height="140"></canvas>
+
   <section class="rack">
     <span class="rack-title">יצוא מסע · אודיו אמיתי WAV</span>
     <div class="dial">
@@ -849,7 +859,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -5865,6 +5875,56 @@ async function exportStems() {
 
 stemExportBtn.addEventListener('click', exportStems);
 
+var waterfallCanvas = document.getElementById('waterfallCanvas');
+var waterfallCtx = waterfallCanvas.getContext('2d');
+
+function waterfallColorLocal(value) {
+  var v = Math.max(0, Math.min(1, value));
+
+  if (v <= 0.02) return [5, 2, 15];
+
+  if (v < 0.3) {
+    var t1 = v / 0.3;
+
+    return [Math.round(5 + t1 * 118), Math.round(2 + t1 * 45), Math.round(15 + t1 * 232)];
+  }
+
+  if (v < 0.6) {
+    var t2 = (v - 0.3) / 0.3;
+
+    return [Math.round(123 + t2 * 132), Math.round(47 - t2 * 4), Math.round(247 - t2 * 33)];
+  }
+
+  if (v < 0.85) {
+    var t3 = (v - 0.6) / 0.25;
+
+    return [Math.round(255 - t3 * 255), Math.round(43 + t3 * 197), Math.round(214 + t3 * 41)];
+  }
+
+  var t4 = (v - 0.85) / 0.15;
+
+  return [Math.round(0 + t4 * 255), Math.round(240 + t4 * 15), Math.round(255)];
+}
+
+function updateWaterfall() {
+  if (!analyser || !freqData) return;
+
+  var w = waterfallCanvas.width;
+
+  waterfallCtx.drawImage(waterfallCanvas, 0, 1);
+
+  var bins = 96;
+  var rowWidth = w / bins;
+
+  for (var i = 0; i < bins; i++) {
+    var v = freqData[i + 2] / 255;
+    var rgb = waterfallColorLocal(v);
+
+    waterfallCtx.fillStyle = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+    waterfallCtx.fillRect(i * rowWidth, 0, Math.ceil(rowWidth), 1);
+  }
+}
+
 var midiEnabled = false;
 var midiOutput = null;
 
@@ -6047,6 +6107,7 @@ function animationLoop(time) {
   drawSpectrum(time);
   drawSpectrumBars();
   updateMeter();
+  updateWaterfall();
   voiceLine.textContent = activeVoices + ' קולות פעילים ✦ תקרה ' + MAX_VOICES;
   requestAnimationFrame(animationLoop);
 }
