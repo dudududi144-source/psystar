@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 56 · מחולל מלודיה · המכונה כותבת שיר</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 57 · אוטומציית טמפו · BPM חי ונושם</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -496,6 +496,8 @@ select option { background: #12082b; color: #fff; }
       <input id="swingRange" type="range" min="0" max="60" value="0"/>
       <span id="swingValue">0%</span>
     </div>
+
+    <button id="tempoRampBtn" class="orb ghost" type="button">טמפו דינמי ⏱</button>
 
     <div class="dial">
       <label for="intensityRange">עוצמת מסע</label>
@@ -1024,7 +1026,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">מחולל מלודיה · סטליסט · פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">טמפו דינמי · מחולל מלודיה · סטליסט · פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -1537,7 +1539,7 @@ var gridEl = document.getElementById('stepGrid');
 var lightTrack = document.getElementById('lightTrack');
 
 function secondsPerStep() {
-  return 60 / bpm / 4;
+  return 60 / currentTempoBpm() / 4;
 }
 
 var lightCells = [];
@@ -2338,6 +2340,7 @@ function scheduleLoop() {
     autopilotTick();
     autoDreamTick();
 
+    schedulerTotalSteps++;
     nextStep = (nextStep + 1) % STEPS;
     nextStepTime += secondsPerStep();
   }
@@ -2361,6 +2364,7 @@ function startEngine() {
   autopilotSteps = 0;
   autoDreamSteps = 0;
   foundStepCounter = 0;
+  schedulerTotalSteps = 0;
   countInTotal = (Number(countInSelect.value) || 0) * 16;
   countInRemaining = countInTotal;
 
@@ -7143,6 +7147,57 @@ melodyGenBtn.addEventListener('click', function () {
   var noteCount = leadRoll.filter(function (d) { return d >= 0; }).length;
   statusLine.textContent = 'מלודיה נולדה ✦ ' + noteCount + ' תווים במגילה';
 });
+
+var tempoRampActive = false;
+var tempoRampStartBpm = 100;
+var tempoRampEndBpm = 140;
+var tempoRampBars = 8;
+var schedulerTotalSteps = 0;
+
+var tempoRampBtn = document.getElementById('tempoRampBtn');
+
+function currentTempoBpm() {
+  if (!tempoRampActive) return bpm;
+
+  var bar = Math.floor(schedulerTotalSteps / 16);
+  var t = Math.min(1, bar / Math.max(1, tempoRampBars));
+
+  return tempoRampStartBpm + (tempoRampEndBpm - tempoRampStartBpm) * t;
+}
+
+function cycleTempoRamp() {
+  var modes = [
+    { active: false, start: 100, end: 140, bars: 8, label: 'כבוי' },
+    { active: true, start: 100, end: 140, bars: 8, label: 'מאיץ 100→140' },
+    { active: true, start: 140, end: 100, bars: 8, label: 'מאט 140→100' },
+    { active: true, start: 90, end: 160, bars: 16, label: 'ממריא 90→160' }
+  ];
+
+  var currentIdx = -1;
+  for (var i = 0; i < modes.length; i++) {
+    if (modes[i].active === tempoRampActive && modes[i].start === tempoRampStartBpm &&
+        modes[i].end === tempoRampEndBpm && modes[i].bars === tempoRampBars) {
+      currentIdx = i;
+      break;
+    }
+  }
+
+  var next = modes[(currentIdx + 1) % modes.length];
+
+  tempoRampActive = next.active;
+  tempoRampStartBpm = next.start;
+  tempoRampEndBpm = next.end;
+  tempoRampBars = next.bars;
+
+  if (tempoRampActive) schedulerTotalSteps = 0;
+
+  tempoRampBtn.classList.toggle('active', tempoRampActive);
+  statusLine.textContent = tempoRampActive
+    ? 'טמפו דינמי פעיל ⏱ ' + next.label + ' על פני ' + tempoRampBars + ' תיבות'
+    : 'טמפו דינמי כבוי ✦ חזרה ל-BPM קבוע';
+}
+
+tempoRampBtn.addEventListener('click', cycleTempoRamp);
 
 var midiEnabled = false;
 var midiOutput = null;
