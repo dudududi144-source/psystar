@@ -7,7 +7,7 @@
 ![grade](https://img.shields.io/badge/PSYSTAR-DMT%20GRADE-ff2bd6?style=for-the-badge)
 ![engine](https://img.shields.io/badge/engine-Bun-7b2ff7?style=for-the-badge)
 ![tests](https://img.shields.io/badge/tests-passing-00f0ff?style=for-the-badge)
-![phases](https://img.shields.io/badge/phases-57%2F57-ffd166?style=for-the-badge)
+![phases](https://img.shields.io/badge/phases-58%2F58-ffd166?style=for-the-badge)
 ![pwa](https://img.shields.io/badge/PWA-installable-00f0ff?style=for-the-badge)
 ![midi](https://img.shields.io/badge/MIDI-in%2Bout-7b2ff7?style=for-the-badge)
 ![p2p](https://img.shields.io/badge/P2P-serverless-ff2bd6?style=for-the-badge)
@@ -66,6 +66,7 @@ PSYSTAR אינו עוד סקוונסר. זו **פלטפורמת התקן קנו�
 - סטליסט: שמירת הופעה שלמה (רשת + עוצמות + אקסנטים + מגילה) כסט ומעבר בין סטים — כמו הופעה אמיתית
 - מחולל מלודיה: המכונה כותבת מלודיה בעצמה וממלאת את המגילה בתנועה חלקה בתוך הסולם
 - אוטומציית טמפו: ה-BPM מאיץ, מאט וממריא על פני תיבות — המוזיקה נושמת ובונה מתח
+- וריאציות מלודיה: המנגינה מתפתחת לכיוונים חדשים ונשארת בתוך הסולם — כמו מלחין שמנגן וריאציות על נושא
 - טבעת ספקטרום חיה סביב הקיילודוסקופ
 - יומן מסע: חמוש, לכידה, ניגון זיכרון מלא
 - יצוא סצנות ויומנים כ-JSON ויבוא חזרה
