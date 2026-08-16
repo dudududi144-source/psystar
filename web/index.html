@@ -478,7 +478,7 @@ select option { background: #12082b; color: #fff; }
 
 <main class="console">
   <h1 class="title">PSYSTAR</h1>
-  <p class="subtitle">מכונת התודעה ✦ שלב 57 · אוטומציית טמפו · BPM חי ונושם</p>
+  <p class="subtitle">מכונת התודעה ✦ שלב 58 · וריאציות מלודיה · המנגינה מתפתחת</p>
 
   <section class="transport">
     <button id="playBtn" class="orb" type="button">▶ הפעלה</button>
@@ -923,6 +923,7 @@ select option { background: #12082b; color: #fff; }
       <button id="rollClearBtn" class="orb ghost" type="button">ניקוי מגילה</button>
     <button id="transcribeBtn" class="orb ghost" type="button">תמלול חי ●</button>
       <button id="melodyGenBtn" class="orb ghost" type="button">חולל מלודיה ✦</button>
+      <button id="melodyVarBtn" class="orb ghost" type="button">וריאציה ✧</button>
       <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.06em;">לחיצה מציבה תו · לחיצה שוב מסירה · הסולם נקבע בבורר ההרמוניה</span>
     </div>
     <div id="rollPanel" style="display: flex; flex-direction: column; gap: 3px; direction: ltr; margin-top: 8px;"></div>
@@ -1026,7 +1027,7 @@ select option { background: #12082b; color: #fff; }
 
   <p id="statusLine" class="status">המערכת נושמת. לחצו הפעלה כדי לפתוח שער · מקש רווח גם עובד.</p>
   <p id="voiceLine" class="voices">0 קולות פעילים</p>
-  <p class="hint">טמפו דינמי · מחולל מלודיה · סטליסט · פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
+  <p class="hint">וריאציות מלודיה · טמפו דינמי · מחולל מלודיה · סטליסט · פריסטים למאסטרינג · הקלטה חיה WAV · יצוא מהלך MIDI · יצוא MIDI · מפת קיצורים (?) · ציר זמן המסע · לגאטו · חלימה אוטומטית · תבניות גרוב · שליטה פיזית במאסטרינג · מהלכים ניידים · איקיו מאסטר · מפל ספקטרום · יצוא סטמים · מדי עוצמה · מאסטרינג · מחולל מהלכים · טרנספורמציות רול · MIDI מלודיה ואקורדים · ארפג'יאטור · מיקומי אקורדים · מנתח ספקטרום · למידת MIDI CC · וריאציות A-D · שערי הסתברות (Alt+קליק) · מטרונום · זיכרון סשן · יצוא שיר מלא · שעון MIDI · טייס אוטומטי · מהלך הרמוני · תמלול חי · מקצבי יסוד · WAV · ביטול מלא · מגילת תווים · עוצמה · חבילות משפחתיות · שער Foundation · עורך שירים · אבולוציה · אקורדים · נשימה אנושית · גשר P2P · MIDI דו-כיווני · אופליין · שום סוד לא נשמר כאן</p>
 </main>
 
 <script>
@@ -7198,6 +7199,65 @@ function cycleTempoRamp() {
 }
 
 tempoRampBtn.addEventListener('click', cycleTempoRamp);
+
+var melodyVarBtn = document.getElementById('melodyVarBtn');
+
+function varyMelodyLocal(melody, amount, maxDegree) {
+  if (!Array.isArray(melody)) return [];
+
+  var amt = Math.max(0, Math.min(1, amount));
+
+  return melody.map(function (note) {
+    if (Math.random() < amt) {
+      if (note < 0) return note;
+
+      var rollValue = Math.random();
+      var shift;
+
+      if (rollValue < 0.7) {
+        shift = Math.random() < 0.5 ? 1 : -1;
+      } else {
+        shift = (Math.random() < 0.5 ? 1 : -1) * 2;
+      }
+
+      var newNote = note + shift;
+
+      if (newNote < 0) newNote = 0;
+      if (newNote > maxDegree) newNote = maxDegree;
+
+      return newNote;
+    }
+
+    return note;
+  });
+}
+
+melodyVarBtn.addEventListener('click', function () {
+  var hasNotes = leadRoll.some(function (d) { return d >= 0; });
+
+  if (!hasNotes) {
+    statusLine.textContent = 'אין מלודיה לווריאציה ✦ חוללו מלודיה קודם';
+    return;
+  }
+
+  var intervals = HARMONY_SCALES[harmonyScaleType] || [];
+  var maxDegree = Math.min(11, Math.max(1, intervals.length * 2 - 1));
+
+  pushGridHistory();
+
+  var original = leadRoll.slice();
+  leadRoll = varyMelodyLocal(original, 0.5, maxDegree);
+
+  buildRollPanel();
+  broadcastGrid();
+
+  var changedCount = 0;
+  for (var i = 0; i < leadRoll.length; i++) {
+    if (leadRoll[i] !== original[i]) changedCount++;
+  }
+
+  statusLine.textContent = 'וריאציה נולדה ✧ ' + changedCount + ' תווים השתנו';
+});
 
 var midiEnabled = false;
 var midiOutput = null;
