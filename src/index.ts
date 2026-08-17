@@ -33,6 +33,7 @@ export * from './domain/setlist.ts';
 export * from './domain/melody-gen.ts';
 export * from './domain/tempo-ramp.ts';
 export * from './domain/melody-variation.ts';
+export * from './domain/song-builder.ts';
 export * from './domain/journey-timeline.ts';
 export * from './protocol/messages.ts';
 export * from './protocol/codec.ts';
